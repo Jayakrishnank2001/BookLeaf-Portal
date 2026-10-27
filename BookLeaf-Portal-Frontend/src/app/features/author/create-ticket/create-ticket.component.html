@@ -1,0 +1,89 @@
+<div class="bl-page bl-animate-in" style="max-width: 760px;">
+  <a routerLink="/author/tickets" class="bl-back"><app-icon name="arrow-left" [size]="15" /> Back to tickets</a>
+
+  @if (submitted()) {
+  <div class="bl-card bl-success bl-animate-scale">
+    <span class="bl-success-icon"><app-icon name="check" [size]="28" /></span>
+    <h1>Your query has been submitted</h1>
+    <p>Ticket <strong>{{ createdCode() }}</strong> has been created. Our support team will review it shortly.</p>
+    <div class="bl-success-meta">
+      <div><span>Book</span><strong>{{ createdBook() || 'General / Account' }}</strong></div>
+      <div><span>Subject</span><strong>{{ createdSubject() }}</strong></div>
+    </div>
+    <div class="bl-success-actions">
+      <a [routerLink]="['/author/tickets', createdId()!]" class="bl-btn bl-btn-primary"><app-icon name="external"
+          [size]="16" /> View ticket</a>
+      <a routerLink="/author/tickets" class="bl-btn bl-btn-ghost">All tickets</a>
+    </div>
+  </div>
+  } @else {
+  <header class="bl-page-head">
+    <div>
+      <p class="bl-page-eyebrow">Submit a Query</p>
+      <h1>How can we help?</h1>
+      <p class="bl-page-sub">Tell us what's going on and we'll route your query to the right team. The BookLeaf AI will
+        classify your ticket automatically.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="bl-card bl-form-card" novalidate>
+    <div class="bl-field">
+      <label class="bl-label" for="book">Related book</label>
+      <app-select [value]="selectedBookId()" [options]="bookOptions" placeholder="Select a book\u2026"
+        (valueChange)="onBookSelect($event)" [block]="true" />
+      <span class="bl-field-hint">Choose "General / Account Level" if your query isn't about a specific book.</span>
+    </div>
+
+    <div class="bl-field">
+      <label class="bl-label" for="subject">Subject</label>
+      <input id="subject" class="bl-input" formControlName="subject" placeholder="Short summary of your query"
+        [class.bl-input-err]="showErr('subject')" />
+      @if (showErr('subject')) { <span class="bl-field-err">Subject is required.</span> }
+    </div>
+
+    <div class="bl-field">
+      <label class="bl-label" for="description">Description</label>
+      <textarea id="description" class="bl-input bl-textarea" rows="6" formControlName="description"
+        placeholder="Describe your issue in as much detail as you can\u2026"
+        [class.bl-input-err]="showErr('description')"></textarea>
+      @if (showErr('description')) { <span class="bl-field-err">Please describe your query.</span> }
+    </div>
+
+    <div class="bl-examples">
+      <span class="bl-examples-label"><app-icon name="info" [size]="14" /> Examples</span>
+      <ul>
+        <li>I haven't received my royalty for <em>Whispers of the Ganges</em> for the last quarter.</li>
+        <li>The ISBN on the Flipkart listing for <em>Code &amp; Karma</em> is showing the wrong edition.</li>
+        <li>A reader reported a printing defect on page 42 of <em>The Last Monsoon</em>.</li>
+        <li>When can I expect the cover design for <em>Startup Sutra</em>?</li>
+      </ul>
+    </div>
+
+    <div class="bl-field">
+      <label class="bl-label">Attachment <span class="bl-optional">(optional)</span></label>
+      <div class="bl-attach" (click)="fileInput.click()" (keydown.enter)="fileInput.click()" tabindex="0" role="button"
+        aria-label="Attach a file">
+        <span class="bl-attach-icon"><app-icon name="paperclip" [size]="18" /></span>
+        <span class="bl-attach-text">
+          @if (fileName()) {
+          <strong>{{ fileName() }}</strong>
+          } @else {
+          <span>Drag a file here, or click to browse</span>
+          <span class="bl-attach-hint">PDF, PNG, or JPG up to 10 MB</span>
+          }
+        </span>
+      </div>
+      <input #fileInput type="file" class="bl-file-hidden" (change)="onFile($event)" />
+      <span class="bl-field-hint">Attachments are optional.</span>
+    </div>
+
+    <div class="bl-form-actions">
+      <a routerLink="/author/tickets" class="bl-btn bl-btn-ghost">Cancel</a>
+      <button type="submit" class="bl-btn bl-btn-primary" [disabled]="loading()">
+        @if (loading()) { <span class="bl-spinner"></span> Submitting\u2026 }
+        @else { <app-icon name="send" [size]="16" /> Submit Query }
+      </button>
+    </div>
+  </form>
+  }
+</div>

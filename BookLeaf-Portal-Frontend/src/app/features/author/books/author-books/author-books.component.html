@@ -1,0 +1,68 @@
+<div class="bl-page bl-animate-in">
+    <header class="bl-page-head">
+        <div>
+            <p class="bl-page-eyebrow">My Books</p>
+            <h1>Your book library</h1>
+            <p class="bl-page-sub">Track production, sales, and royalties across all your titles.</p>
+        </div> <a routerLink="/author/tickets/new" class="bl-btn bl-btn-ghost"> <app-icon name="plus" [size]="18" />
+            Raise a query </a>
+    </header> <!-- Toolbar -->
+    <div class="bl-card bl-toolbar">
+        <div class="bl-search-wrap"> <app-icon class="bl-search-icon" name="search" [size]="18" /> <input
+                class="bl-input bl-search-input" type="search" placeholder="Search by title, ISBN, or genre\u2026"
+                [(ngModel)]="search" (ngModelChange)="applyFilters()" aria-label="Search books" /> </div>
+        <div class="bl-toolbar-filters"> <app-select [value]="genreFilter" [options]="genreOptions"
+                placeholder="All genres" (valueChange)="onFilterChange($event, 'genre')" /> <app-select
+                [value]="statusFilter" [options]="statusOptions" placeholder="All statuses"
+                (valueChange)="onFilterChange($event, 'status')" /> <app-select [value]="sortKey"
+                [options]="sortOptions" placeholder="Sort by" (valueChange)="onSortChange($event)" /> </div>
+    </div>
+    <p class="bl-result-count">{{ filtered().length }} {{ filtered().length === 1 ? 'book' : 'books' }}</p> @if
+    (loading()) { <div class="bl-grid"> @for (i of [1,2,3,4,5,6]; track i) { <div class="bl-card bl-book-tile">
+            <div class="bl-skeleton" style="height: 120px; border-radius: 10px;"></div>
+            <div class="bl-skeleton" style="height: 16px; width: 70%; margin-top: 14px;"></div>
+            <div class="bl-skeleton" style="height: 12px; width: 40%; margin-top: 8px;"></div>
+            <div class="bl-skeleton" style="height: 12px; width: 90%; margin-top: 16px;"></div>
+        </div> } </div> } @else if (filtered().length === 0) { <div class="bl-card bl-empty"> <app-icon name="book"
+            [size]="30" />
+        <h3>No books match your filters</h3>
+        <p>Try adjusting your search or clearing the filters.</p> <button class="bl-btn bl-btn-ghost"
+            (click)="clearFilters()">Clear filters</button>
+    </div> } @else { <div class="bl-grid"> @for (book of filtered(); track book.id) { <a
+            [routerLink]="['/author/books', book.id]" class="bl-card bl-book-tile bl-hover-lift">
+            <div class="bl-tile-cover"> <app-badge [title]="book.title" /> <app-badge kind="book-status"
+                    [value]="book.status" [dot]="true" /> </div>
+            <div class="bl-tile-body">
+                <h3 class="bl-tile-title">{{ book.title }}</h3> <span class="bl-tile-genre">{{ book.genre }}</span>
+                <dl class="bl-tile-grid">
+                    <div class="bl-tile-stat">
+                        <dt>ISBN</dt>
+                        <dd>{{ book.isbn || '\u2014' }}</dd>
+                    </div>
+                    <div class="bl-tile-stat">
+                        <dt>Published</dt>
+                        <dd>{{ book.publicationDate | blDate }}</dd>
+                    </div>
+                    <div class="bl-tile-stat">
+                        <dt>MRP</dt>
+                        <dd>{{ book.mrp | blMoney }}</dd>
+                    </div>
+                    <div class="bl-tile-stat">
+                        <dt>Copies sold</dt>
+                        <dd class="bl-mono-nums">{{ book.copiesSold | number }}</dd>
+                    </div>
+                    <div class="bl-tile-stat">
+                        <dt>Royalty earned</dt>
+                        <dd class="bl-mono-nums">{{ book.royaltyEarned | blMoney }}</dd>
+                    </div>
+                    <div class="bl-tile-stat">
+                        <dt>Pending</dt>
+                        <dd class="bl-mono-nums" [class.bl-pending]="book.royaltyPending > 0">{{ book.royaltyPending |
+                            blMoney }}</dd>
+                    </div>
+                </dl> @if (book.platforms.length > 0) { <div class="bl-tile-platforms"> @for (p of book.platforms; track
+                    p) { <span class="bl-platform">{{ p }}</span> } </div> } @else { <div class="bl-tile-platforms">
+                    <span class="bl-platform bl-platform-na">Not available yet</span> </div> }
+            </div>
+        </a> } </div> }
+</div>

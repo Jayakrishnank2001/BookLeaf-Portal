@@ -1,0 +1,32 @@
+<div class="bl-shell">
+    <aside class="bl-sidebar" [class.bl-sidebar-open]="mobileOpen()">
+        <div class="bl-sidebar-head">
+            <div class="bl-brand"> <span class="bl-brand-mark">B</span>
+                <div class="bl-brand-text"> <span class="bl-brand-name">BookLeaf</span> <span
+                        class="bl-brand-sub">Operations</span> </div>
+            </div> <button class="bl-sidebar-close" (click)="mobileOpen.set(false)" aria-label="Close menu"
+                [hidden]="!mobileOpen()"> <app-icon name="close" [size]="20" /> </button>
+        </div>
+        <nav class="bl-nav"> @for (item of nav; track item.route) { <a [routerLink]="item.route"
+                routerLinkActive="bl-nav-active" [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+                class="bl-nav-item" (click)="mobileOpen.set(false)"> <app-icon [name]="item.icon" [size]="20" />
+                <span>{{ item.label }}</span> </a> } </nav>
+        <div class="bl-sidebar-foot"> <button class="bl-nav-item bl-nav-logout" (click)="logout()"> <app-icon
+                    name="logout" [size]="20" /> <span>Logout</span> </button> </div>
+    </aside> @if (mobileOpen()) { <div class="bl-overlay" (click)="mobileOpen.set(false)"></div> } <div class="bl-main">
+        <header class="bl-header"> <button class="bl-menu-btn" (click)="mobileOpen.set(true)" aria-label="Open menu">
+                <app-icon name="menu" [size]="22" /> </button>
+            <div class="bl-conn" [class.bl-conn-off]="!realtime.connected()"> <span class="bl-conn-dot"></span> {{
+                realtime.connected() ? 'Connected' : 'Reconnecting\u2026' }} </div>
+            <div class="bl-header-actions"> <button class="bl-icon-btn" aria-label="Notifications"> <app-icon
+                        name="bell" [size]="20" /> <span class="bl-bell-dot"></span> </button>
+                <div class="bl-profile"> <app-avatar [initials]="user?.initials ?? ''"
+                        [color]="user?.avatarColor ?? '#2f5d4a'" [size]="36" />
+                    <div class="bl-profile-meta"> <span class="bl-profile-name">{{ user?.name }}</span> <span
+                            class="bl-profile-role">Operations</span> </div>
+                </div>
+            </div>
+        </header>
+        <main class="bl-content"> <router-outlet /> </main>
+    </div>
+</div>

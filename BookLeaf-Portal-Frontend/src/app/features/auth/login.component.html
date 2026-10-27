@@ -1,0 +1,118 @@
+<div class="bl-login">
+  <!-- Left brand panel -->
+  <section class="bl-login-aside" aria-hidden="true">
+    <div class="bl-login-brand">
+      <span class="bl-login-mark">B</span>
+      <div>
+        <span class="bl-login-brandname">BookLeaf Publishing</span>
+        <span class="bl-login-brandsmall">Author Support &amp; Communication Portal</span>
+      </div>
+    </div>
+    <div class="bl-login-quote">
+      <p class="bl-login-quote-h">Every author deserves a clear answer.</p>
+      <p class="bl-login-quote-b">Track your books, royalties, and support conversations with the BookLeaf operations
+        team — all in one place.</p>
+    </div>
+    <div class="bl-login-deco">
+      @for (d of decor; track d.title) {
+      <div class="bl-login-card">
+        <span class="bl-login-cardicon" [style.color]="d.color"><app-icon [name]="d.icon" [size]="18" /></span>
+        <div>
+          <span class="bl-login-cardt">{{ d.title }}</span>
+          <span class="bl-login-cardb">{{ d.body }}</span>
+        </div>
+      </div>
+      }
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section class="bl-login-main">
+    <div class="bl-login-wrap">
+      <div class="bl-login-head">
+        <span class="bl-login-eyebrow">Welcome back</span>
+        <h1 class="bl-login-title">Sign in to your portal</h1>
+        <p class="bl-login-sub">Use your BookLeaf author or operations account to continue.</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="bl-login-form" novalidate>
+        <div class="bl-field">
+          <label class="bl-label" for="email">Email address</label>
+          <div class="bl-input-wrap">
+            <app-icon class="bl-input-lead" name="mail" [size]="18" />
+            <input id="email" type="email" class="bl-input bl-input-withicon" formControlName="email"
+              autocomplete="username" [class.bl-input-err]="showErr('email')" placeholder="you@email.com" />
+          </div>
+          @if (showErr('email')) {
+          <span class="bl-field-err">{{ errMsg('email') }}</span>
+          }
+        </div>
+
+        <div class="bl-field">
+          <div class="bl-label-row">
+            <label class="bl-label" for="password">Password</label>
+            <a class="bl-link-muted" routerLink="/login">Forgot password?</a>
+          </div>
+          <div class="bl-input-wrap">
+            <app-icon class="bl-input-lead" name="lock" [size]="18" />
+            <input id="password" [type]="showPass() ? 'text' : 'password'" class="bl-input bl-input-withicon"
+              formControlName="password" autocomplete="current-password" [class.bl-input-err]="showErr('password')"
+              placeholder="Enter your password" />
+            <button type="button" class="bl-input-trail" (click)="showPass.set(!showPass())"
+              [attr.aria-label]="showPass() ? 'Hide password' : 'Show password'">
+              <app-icon [name]="showPass() ? 'eye-off' : 'eye'" [size]="18" />
+            </button>
+          </div>
+          @if (showErr('password')) {
+          <span class="bl-field-err">{{ errMsg('password') }}</span>
+          }
+        </div>
+
+        <div class="bl-login-row">
+          <label class="bl-remember">
+            <input type="checkbox" formControlName="remember" />
+            <span class="bl-remember-box"><app-icon name="check" [size]="12" /></span>
+            <span>Remember me</span>
+          </label>
+        </div>
+
+        @if (formError()) {
+        <div class="bl-login-error bl-animate-in">
+          <app-icon name="alert" [size]="16" />
+          <span>{{ formError() }}</span>
+        </div>
+        }
+
+        <button type="submit" class="bl-btn bl-btn-primary bl-login-submit" [disabled]="loading()">
+          @if (loading()) {
+          <span class="bl-spinner"></span> Signing in\u2026
+          } @else {
+          Sign in <app-icon name="arrow-right" [size]="18" />
+          }
+        </button>
+      </form>
+
+      <div class="bl-login-accounts">
+        <span class="bl-login-accounts-label">Demo accounts</span>
+        <div class="bl-login-accounts-grid">
+          <button type="button" class="bl-login-account" (click)="fill('priya.sharma@email.com', 'author')">
+            <span class="bl-login-account-dot" style="background:var(--color-primary)"></span>
+            <span class="bl-login-account-meta">
+              <span class="bl-login-account-role">Author</span>
+              <span class="bl-login-account-email">priya.sharma@email.com</span>
+            </span>
+          </button>
+          <button type="button" class="bl-login-account" (click)="fill('admin@bookleaf.com', 'admin')">
+            <span class="bl-login-account-dot" style="background:var(--color-secondary)"></span>
+            <span class="bl-login-account-meta">
+              <span class="bl-login-account-role">Admin</span>
+              <span class="bl-login-account-email">admin@bookleaf.com</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <p class="bl-login-foot">BookLeaf Publishing &middot; &copy; 2026 &middot; Author Support Portal</p>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,113 @@
+<div class="bl-page bl-animate-in"> <a routerLink="/author/books" class="bl-back"><app-icon name="arrow-left"
+            [size]="15" /> Back to books</a> @if (loading()) { <div class="bl-detail-grid">
+        <div class="bl-card" style="padding: 24px;">
+            <div class="bl-skeleton" style="aspect-ratio: 3/4.2; max-width: 240px; border-radius: 10px;"></div>
+            <div class="bl-skeleton" style="height: 22px; width: 70%; margin-top: 20px;"></div>
+            <div class="bl-skeleton" style="height: 14px; width: 40%; margin-top: 10px;"></div>
+        </div>
+        <div class="bl-card" style="padding: 24px;">
+            <div class="bl-skeleton" style="height: 18px; width: 40%;"></div>
+            <div class="bl-skeleton" style="height: 14px; width: 90%; margin-top: 12px;"></div>
+            <div class="bl-skeleton" style="height: 14px; width: 70%; margin-top: 8px;"></div>
+        </div>
+    </div> } @else if (!book()) { <div class="bl-card bl-empty"> <app-icon name="book" [size]="30" />
+        <h3>Book not found</h3>
+        <p>We couldn't find this book. It may have been removed.</p> <a routerLink="/author/books"
+            class="bl-btn bl-btn-ghost">Back to books</a>
+    </div> } @else { <div class="bl-detail-grid"> <!-- Left column -->
+        <aside class="bl-card bl-detail-left">
+            <div class="bl-detail-cover"> <app-badge [title]="book()!.title" /> </div> <app-badge kind="book-status"
+                [value]="book()!.status" [dot]="true" />
+            <h1 class="bl-detail-title">{{ book()!.title }}</h1>
+            <p class="bl-detail-blurb">{{ book()!.blurb }}</p>
+            <dl class="bl-detail-facts">
+                <div class="bl-fact">
+                    <dt>Genre</dt>
+                    <dd>{{ book()!.genre }}</dd>
+                </div>
+                <div class="bl-fact">
+                    <dt>ISBN</dt>
+                    <dd class="bl-mono-nums">{{ book()!.isbn || 'Not available yet' }}</dd>
+                </div>
+                <div class="bl-fact">
+                    <dt>Published</dt>
+                    <dd>{{ book()!.publicationDate | blDate }}</dd>
+                </div>
+                <div class="bl-fact">
+                    <dt>MRP</dt>
+                    <dd>{{ book()!.mrp | blMoney }}</dd>
+                </div>
+            </dl> <a [routerLink]="['/author/tickets/new']" [queryParams]="{ bookId: book()!.id }"
+                class="bl-btn bl-btn-soft bl-detail-cta"> <app-icon name="plus" [size]="17" /> Raise a query for this
+                book </a>
+        </aside> <!-- Right column -->
+        <section class="bl-detail-right"> <!-- Royalty summary -->
+            <div class="bl-card bl-royalty-card">
+                <div class="bl-royalty-head">
+                    <h2>Royalty summary</h2> <app-icon name="rupee" [size]="20" />
+                </div>
+                <div class="bl-royalty-total"> <span class="bl-royalty-total-label">Total earned</span> <span
+                        class="bl-royalty-total-value bl-mono-nums">{{ book()!.royaltyEarned | blMoney }}</span> </div>
+                <div class="bl-royalty-bar-wrap">
+                    <div class="bl-royalty-bar">
+                        <div class="bl-royalty-bar-paid" [style.width.%]="paidPct()"></div>
+                    </div>
+                </div>
+                <div class="bl-royalty-split">
+                    <div class="bl-royalty-paid"> <span class="bl-royalty-dot"
+                            style="background: var(--color-success)"></span>
+                        <div> <span class="bl-royalty-split-label">Paid</span> <span
+                                class="bl-royalty-split-value bl-mono-nums">{{ book()!.royaltyPaid | blMoney }}</span>
+                        </div>
+                    </div>
+                    <div class="bl-royalty-pending"> <span class="bl-royalty-dot"
+                            style="background: var(--color-primary)"></span>
+                        <div> <span class="bl-royalty-split-label">Pending</span> <span
+                                class="bl-royalty-split-value bl-mono-nums">{{ book()!.royaltyPending | blMoney
+                                }}</span> </div>
+                    </div>
+                </div>
+            </div> <!-- Sales metrics -->
+            <div class="bl-card bl-panel">
+                <h2 class="bl-panel-title"><app-icon name="trending" [size]="18" /> Sales metrics</h2>
+                <div class="bl-stat-grid">
+                    <div class="bl-stat-box"> <span class="bl-stat-label">Copies sold</span> <span
+                            class="bl-stat-value bl-mono-nums">{{ book()!.copiesSold | number }}</span> </div>
+                    <div class="bl-stat-box"> <span class="bl-stat-label">Last payout</span> <span
+                            class="bl-stat-value bl-mono-nums">{{ book()!.lastPayoutAmount | blMoney }}</span> <span
+                            class="bl-stat-sub">{{ book()!.lastPayoutDate | blDate }}</span> </div>
+                    <div class="bl-stat-box"> <span class="bl-stat-label">MRP</span> <span
+                            class="bl-stat-value bl-mono-nums">{{ book()!.mrp | blMoney }}</span> </div>
+                    <div class="bl-stat-box"> <span class="bl-stat-label">Print partner</span> <span
+                            class="bl-stat-value">{{ book()!.printPartner || '\u2014' }}</span> </div>
+                </div>
+            </div> <!-- Distribution -->
+            <div class="bl-card bl-panel">
+                <h2 class="bl-panel-title"><app-icon name="layers" [size]="18" /> Distribution channels</h2> @if
+                (book()!.platforms.length > 0) { <div class="bl-platform-grid"> @for (p of book()!.platforms; track p) {
+                    <span class="bl-platform-chip"> <app-icon name="check" [size]="14" /> {{ p }} </span> } </div> }
+                @else { <p class="bl-empty-inline">Not available yet — this book is still in production.</p> }
+            </div> <!-- Publication details -->
+            <div class="bl-card bl-panel">
+                <h2 class="bl-panel-title"><app-icon name="book-open" [size]="18" /> Publication details</h2>
+                <dl class="bl-publish-grid">
+                    <div>
+                        <dt>Status</dt>
+                        <dd><app-badge kind="book-status" [value]="book()!.status" [dot]="true" /></dd>
+                    </div>
+                    <div>
+                        <dt>Publication date</dt>
+                        <dd>{{ book()!.publicationDate | blDate }}</dd>
+                    </div>
+                    <div>
+                        <dt>ISBN</dt>
+                        <dd class="bl-mono-nums">{{ book()!.isbn || 'Not available yet' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Genre</dt>
+                        <dd>{{ book()!.genre }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </section>
+    </div> } </div>

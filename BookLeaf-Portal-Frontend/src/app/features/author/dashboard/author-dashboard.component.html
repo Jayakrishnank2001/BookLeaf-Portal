@@ -1,0 +1,77 @@
+<div class="bl-page bl-animate-in">
+    <header class="bl-page-head">
+        <div>
+            <p class="bl-page-eyebrow">Author Dashboard</p>
+            <h1>Good morning, {{ firstName }}</h1>
+            <p class="bl-page-sub">Here's an overview of your books and support requests.</p>
+        </div> <a routerLink="/author/tickets/new" class="bl-btn bl-btn-primary"> <app-icon name="plus" [size]="18" />
+            Submit a query </a>
+    </header> <!-- Metrics -->
+    <section class="bl-metrics" aria-label="Summary"> @for (m of metrics(); track m.label) { <div
+            class="bl-card bl-metric bl-hover-lift">
+            <div class="bl-metric-top"> <span class="bl-metric-icon" [style.color]="m.accent"
+                    [style.background]="m.accent + '1a'"> <app-icon [name]="m.icon" [size]="20" /> </span> <span
+                    class="bl-metric-value bl-mono-nums">{{ m.value }}</span> </div> <span class="bl-metric-label">{{
+                m.label }}</span> @if (m.sub) { <span class="bl-metric-sub">{{ m.sub }}</span> }
+        </div> } </section> <!-- Recent books -->
+    <section class="bl-section">
+        <div class="bl-section-head">
+            <h2>Recent books</h2> <a routerLink="/author/books" class="bl-section-link">View all books <app-icon
+                    name="arrow-right" [size]="14" /></a>
+        </div> @if (loading()) { <div class="bl-book-grid"> @for (i of [1,2,3]; track i) { <div
+                class="bl-card bl-book-card">
+                <div class="bl-skeleton" style="aspect-ratio: 16/10; border-radius: 10px;"></div>
+                <div class="bl-skeleton" style="height: 18px; width: 70%; margin-top: 14px;"></div>
+                <div class="bl-skeleton" style="height: 13px; width: 40%; margin-top: 8px;"></div>
+                <div class="bl-skeleton" style="height: 13px; width: 90%; margin-top: 16px;"></div>
+                <div class="bl-skeleton" style="height: 13px; width: 60%; margin-top: 6px;"></div>
+            </div> } </div> } @else { <div class="bl-book-grid"> @for (book of recentBooks(); track book.id) { <a
+                [routerLink]="['/author/books', book.id]" class="bl-card bl-book-card bl-hover-lift"> <app-badge
+                    [title]="book.title" />
+                <div class="bl-book-body">
+                    <div class="bl-book-title-row">
+                        <h3 class="bl-book-title">{{ book.title }}</h3> <app-badge kind="book-status"
+                            [value]="book.status" [dot]="true" />
+                    </div> <span class="bl-book-genre">{{ book.genre }}</span>
+                    <div class="bl-book-meta">
+                        <div class="bl-book-meta-item"> <span class="bl-book-meta-label">ISBN</span> <span
+                                class="bl-book-meta-value">{{ book.isbn || 'Not available yet' }}</span> </div>
+                        <div class="bl-book-meta-item"> <span class="bl-book-meta-label">Copies sold</span> <span
+                                class="bl-book-meta-value bl-mono-nums">{{ book.copiesSold | number }}</span> </div>
+                        <div class="bl-book-meta-item"> <span class="bl-book-meta-label">Royalty earned</span> <span
+                                class="bl-book-meta-value bl-mono-nums">{{ book.royaltyEarned | blMoney }}</span> </div>
+                        <div class="bl-book-meta-item"> <span class="bl-book-meta-label">Pending</span> <span
+                                class="bl-book-meta-value bl-mono-nums"
+                                [class.bl-text-pending]="book.royaltyPending > 0"> {{ book.royaltyPending | blMoney }}
+                            </span> </div>
+                    </div>
+                </div>
+            </a> } </div> }
+    </section> <!-- Recent tickets -->
+    <section class="bl-section">
+        <div class="bl-section-head">
+            <h2>Recent support tickets</h2> <a routerLink="/author/tickets" class="bl-section-link">View all tickets
+                <app-icon name="arrow-right" [size]="14" /></a>
+        </div> @if (ticketsLoading()) { <div class="bl-card"> @for (i of [1,2,3]; track i) { <div
+                class="bl-ticket-row bl-skel-row">
+                <div class="bl-skeleton" style="height: 14px; width: 120px;"></div>
+                <div class="bl-skeleton" style="height: 14px; width: 60%;"></div>
+                <div class="bl-skeleton" style="height: 22px; width: 80px; border-radius: 999px;"></div>
+            </div> } </div> } @else if (recentTickets().length === 0) { <div class="bl-card bl-empty"> <app-icon
+                name="ticket" [size]="28" />
+            <h3>No tickets yet</h3>
+            <p>When you raise a query it will appear here.</p>
+        </div> } @else { <div class="bl-card bl-ticket-list">
+            <div class="bl-ticket-grid-head">
+                <span>Ticket</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>Updated</span>
+            </div> @for (t of recentTickets(); track t.id) { <a [routerLink]="['/author/tickets', t.id]"
+                class="bl-ticket-row bl-hover-lift"> <span class="bl-ticket-code bl-mono-nums">{{ t.ticketCode }}</span>
+                <span class="bl-ticket-subject"> <span class="bl-ticket-subject-text">{{ t.subject }}</span> <span
+                        class="bl-ticket-book">{{ t.bookTitle || 'General' }}</span> </span> <app-badge kind="category"
+                    [value]="t.category" /> <app-badge kind="priority" [value]="t.priority" [dot]="true"
+                    [solid]="t.priority === 'Critical' || t.priority === 'High'" /> <app-badge kind="status"
+                    [value]="t.status" [dot]="true" /> <span class="bl-ticket-updated">{{ t.updatedAt | blTimeAgo
+                    }}</span> </a> }
+        </div> }
+    </section>
+</div>

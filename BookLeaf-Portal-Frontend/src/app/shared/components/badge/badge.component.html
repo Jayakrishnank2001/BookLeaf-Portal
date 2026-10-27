@@ -1,0 +1,5 @@
+<span class="bl-badge" [style.color]="fg" [style.background]="bg"
+  [style.border]="border ? '1px solid '+border : 'none'">
+  @if (dot) { <span class="bl-badge-dot" [style.background]="fg"></span> }
+  {{ label() }}
+</span>

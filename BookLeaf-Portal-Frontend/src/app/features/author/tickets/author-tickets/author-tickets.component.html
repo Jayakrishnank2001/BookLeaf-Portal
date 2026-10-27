@@ -1,0 +1,71 @@
+<div class="bl-page bl-animate-in">
+  <header class="bl-page-head">
+    <div>
+      <p class="bl-page-eyebrow">My Support Tickets</p>
+      <h1>Track your questions and conversations with the BookLeaf team.</h1>
+    </div>
+    <a routerLink="/author/tickets/new" class="bl-btn bl-btn-primary">
+      <app-icon name="plus" [size]="18" /> New query
+    </a>
+  </header>
+
+  <!-- Filters -->
+  <div class="bl-card bl-toolbar">
+    <div class="bl-search-wrap">
+      <app-icon class="bl-search-icon" name="search" [size]="18" />
+      <input class="bl-input bl-search-input" type="search" placeholder="Search by ticket ID, subject, or book\u2026"
+        [(ngModel)]="search" (ngModelChange)="applyFilters()" aria-label="Search tickets" />
+    </div>
+    <div class="bl-toolbar-filters">
+      <app-select [value]="statusFilter" [options]="statusOptions" placeholder="All statuses"
+        (valueChange)="onFilter($event, 'status')" />
+      <app-select [value]="priorityFilter" [options]="priorityOptions" placeholder="All priorities"
+        (valueChange)="onFilter($event, 'priority')" />
+      <app-select [value]="categoryFilter" [options]="categoryOptions" placeholder="All categories"
+        (valueChange)="onFilter($event, 'category')" />
+      <app-select [value]="dateFilter" [options]="dateOptions" placeholder="Any time"
+        (valueChange)="onFilter($event, 'date')" />
+    </div>
+  </div>
+
+  <p class="bl-result-count">{{ filtered().length }} {{ filtered().length === 1 ? 'ticket' : 'tickets' }}</p>
+
+  @if (loading()) {
+  <div class="bl-card">
+    @for (i of [1,2,3]; track i) {
+    <div class="bl-skel-row">
+      <div class="bl-skeleton" style="height: 14px; width: 110px;"></div>
+      <div class="bl-skeleton" style="height: 14px; width: 50%;"></div>
+      <div class="bl-skeleton" style="height: 22px; width: 90px; border-radius: 999px;"></div>
+    </div>
+    }
+  </div>
+  } @else if (filtered().length === 0) {
+  <div class="bl-card bl-empty">
+    <app-icon name="ticket" [size]="30" />
+    <h3>No tickets found</h3>
+    <p>Try adjusting your filters, or raise a new query.</p>
+    <a routerLink="/author/tickets/new" class="bl-btn bl-btn-soft"><app-icon name="plus" [size]="16" /> New query</a>
+  </div>
+  } @else {
+  <div class="bl-card bl-list">
+    <div class="bl-grid-head">
+      <span>Ticket</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>Created</span><span>Updated</span>
+    </div>
+    @for (t of filtered(); track t.id) {
+    <a [routerLink]="['/author/tickets', t.id]" class="bl-row bl-hover-lift">
+      <span class="bl-code bl-mono-nums">{{ t.ticketCode }}</span>
+      <span class="bl-subject">
+        <span class="bl-subject-text">{{ t.subject }}</span>
+        <span class="bl-book">{{ t.bookTitle || 'General / Account' }}</span>
+      </span>
+      <app-badge kind="category" [value]="t.category" />
+      <app-badge kind="priority" [value]="t.priority" [dot]="true" [solid]="isUrgent(t.priority)" />
+      <app-badge kind="status" [value]="t.status" [dot]="true" />
+      <span class="bl-date">{{ t.createdAt | blDate:'short' }}</span>
+      <span class="bl-updated">{{ t.updatedAt | blTimeAgo }}</span>
+    </a>
+    }
+  </div>
+  }
+</div>

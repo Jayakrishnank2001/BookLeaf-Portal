@@ -1,0 +1,106 @@
+<div class="bl-page bl-animate-in">
+  <header class="bl-page-head">
+    <div>
+      <p class="bl-page-eyebrow">Ticket Queue</p>
+      <h1>Support operations queue</h1>
+      <p class="bl-page-sub">Triage, assign, and resolve author support tickets. Critical and high-priority tickets are
+        highlighted.</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <div class="bl-card bl-toolbar">
+    <div class="bl-search-wrap">
+      <app-icon class="bl-search-icon" name="search" [size]="18" />
+      <input class="bl-input bl-search-input" type="search"
+        placeholder="Search by ticket ID, subject, author, or book\u2026" [(ngModel)]="search"
+        (ngModelChange)="applyFilters()" aria-label="Search tickets" />
+    </div>
+    <div class="bl-filters">
+      <app-select [value]="statusFilter" [options]="statusOptions" placeholder="Status"
+        (valueChange)="onFilter($event,'status')" />
+      <app-select [value]="categoryFilter" [options]="categoryOptions" placeholder="Category"
+        (valueChange)="onFilter($event,'category')" />
+      <app-select [value]="priorityFilter" [options]="priorityOptions" placeholder="Priority"
+        (valueChange)="onFilter($event,'priority')" />
+      <app-select [value]="assignedFilter" [options]="assignedOptions" placeholder="Assigned to"
+        (valueChange)="onFilter($event,'assigned')" />
+      <app-select [value]="dateFilter" [options]="dateOptions" placeholder="Date"
+        (valueChange)="onFilter($event,'date')" />
+      <app-select [value]="sortKey" [options]="sortOptions" placeholder="Sort" (valueChange)="onSort($event)" />
+    </div>
+  </div>
+
+  <div class="bl-meta-row">
+    <p class="bl-count">{{ filtered().length }} {{ filtered().length === 1 ? 'ticket' : 'tickets' }}</p>
+    <div class="bl-legend">
+      <span class="bl-legend-item"><span class="bl-legend-dot" style="background:var(--color-critical)"></span>
+        Critical</span>
+      <span class="bl-legend-item"><span class="bl-legend-dot" style="background:var(--color-high)"></span> High</span>
+    </div>
+  </div>
+
+  @if (loading()) {
+  <div class="bl-card">
+    <div class="bl-thead">
+      <span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span>
+    </div>
+    @for (i of [1,2,3,4,5,6,7,8]; track i) {
+    <div class="bl-skel-row">
+      <div class="bl-skeleton" style="height: 14px; width: 80%; flex: 1;"></div>
+    </div>
+    }
+  </div>
+  } @else if (filtered().length === 0) {
+  <div class="bl-card bl-empty">
+    <app-icon name="ticket" [size]="30" />
+    <h3>No tickets match your filters</h3>
+    <p>Try adjusting the search or clearing filters.</p>
+    <button class="bl-btn bl-btn-ghost" (click)="clearFilters()">Clear filters</button>
+  </div>
+  } @else {
+  <div class="bl-card bl-table">
+    <div class="bl-thead">
+      <span class="bl-th-prio" (click)="toggleSort('priority')">Priority <app-icon [name]="sortIcon('priority')"
+          [size]="12" /></span>
+      <span>Ticket</span>
+      <span>Subject</span>
+      <span>Author</span>
+      <span>Book</span>
+      <span>Category</span>
+      <span>Status</span>
+      <span>Assigned</span>
+      <span class="bl-th-created" (click)="toggleSort('created')">Created <app-icon [name]="sortIcon('created')"
+          [size]="12" /></span>
+      <span class="bl-th-updated" (click)="toggleSort('updated')">Updated <app-icon [name]="sortIcon('updated')"
+          [size]="12" /></span>
+    </div>
+    @for (t of filtered(); track t.id) {
+    <a [routerLink]="['/admin/tickets', t.id]" class="bl-trow bl-hover-lift"
+      [class.bl-trow-urgent]="isUrgent(t.priority)">
+      <span class="bl-prio-cell">
+        <span class="bl-prio-bar" [style.background]="prioColor(t.priority)"></span>
+        <app-badge kind="priority" [value]="t.priority" [dot]="true" [solid]="isUrgent(t.priority)" />
+      </span>
+      <span class="bl-tcode bl-mono-nums">{{ t.ticketCode }}</span>
+      <span class="bl-tsubj">
+        <span class="bl-tsubj-text">{{ t.subject }}</span>
+      </span>
+      <span class="bl-tauthor">{{ t.authorName }}</span>
+      <span class="bl-tbook">{{ t.bookTitle || 'General' }}</span>
+      <app-badge kind="category" [value]="t.category" />
+      <app-badge kind="status" [value]="t.status" [dot]="true" />
+      <span class="bl-tassigned">
+        @if (t.assignedToName) {
+        <span class="bl-assigned-chip">{{ t.assignedToName }}</span>
+        } @else {
+        <span class="bl-unassigned">Unassigned</span>
+        }
+      </span>
+      <span class="bl-tdate">{{ t.createdAt | blDate:'short' }}</span>
+      <span class="bl-tupdated">{{ t.updatedAt | blTimeAgo }}</span>
+    </a>
+    }
+  </div>
+  }
+</div>

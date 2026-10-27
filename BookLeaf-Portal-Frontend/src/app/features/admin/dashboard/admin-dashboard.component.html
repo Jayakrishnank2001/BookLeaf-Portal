@@ -1,0 +1,117 @@
+<div class="bl-page bl-animate-in">
+  <header class="bl-page-head">
+    <div>
+      <p class="bl-page-eyebrow">Support Operations</p>
+      <h1>Monitor and manage author support requests.</h1>
+    </div>
+    <a routerLink="/admin/tickets" class="bl-btn bl-btn-primary">
+      <app-icon name="list" [size]="18" /> Open queue
+    </a>
+  </header>
+
+  <!-- Metrics -->
+  <section class="bl-metrics">
+    @for (m of metrics(); track m.label) {
+    <div class="bl-card bl-metric bl-hover-lift">
+      <div class="bl-metric-top">
+        <span class="bl-metric-icon" [style.color]="m.accent" [style.background]="m.bg">
+          <app-icon [name]="m.icon" [size]="20" />
+        </span>
+        <span class="bl-metric-value bl-mono-nums">{{ m.value }}</span>
+      </div>
+      <span class="bl-metric-label">{{ m.label }}</span>
+    </div>
+    }
+  </section>
+
+  <div class="bl-grid-2">
+    <!-- Activity chart -->
+    <section class="bl-card bl-panel">
+      <div class="bl-panel-head">
+        <h2><app-icon name="activity" [size]="18" /> Ticket activity</h2>
+        <span class="bl-panel-sub">Last 14 days</span>
+      </div>
+      @if (activityLoading()) {
+      <div class="bl-chart-skel">
+        @for (i of [1,2,3,4,5,6,7,8,9,10]; track i) {
+        <div class="bl-skeleton" style="flex:1; height: 100%; border-radius: 6px;"></div>
+        }
+      </div>
+      } @else {
+      <div class="bl-chart">
+        @for (point of activity(); track point.date) {
+        <div class="bl-chart-bar-wrap" [title]="point.date + ': ' + point.count + ' tickets'">
+          <div class="bl-chart-bar" [style.height.%]="barHeight(point.count)"></div>
+          <span class="bl-chart-val bl-mono-nums">{{ point.count }}</span>
+        </div>
+        }
+      </div>
+      <div class="bl-chart-x">
+        @for (point of xLabels(); track point) {
+        <span>{{ point }}</span>
+        }
+      </div>
+      }
+    </section>
+
+    <!-- Priority breakdown -->
+    <section class="bl-card bl-panel">
+      <div class="bl-panel-head">
+        <h2><app-icon name="flag" [size]="18" /> Priority breakdown</h2>
+        <span class="bl-panel-sub">Active tickets</span>
+      </div>
+      @for (p of priorityBreakdown(); track p.label) {
+      <div class="bl-prio-row">
+        <div class="bl-prio-head">
+          <span class="bl-prio-dot" [style.background]="p.color"></span>
+          <span class="bl-prio-label">{{ p.label }}</span>
+          <span class="bl-prio-count bl-mono-nums">{{ p.count }}</span>
+        </div>
+        <div class="bl-prio-bar">
+          <div class="bl-prio-fill" [style.background]="p.color" [style.width.%]="p.pct"></div>
+        </div>
+      </div>
+      }
+    </section>
+  </div>
+
+  <!-- Recent tickets -->
+  <section class="bl-section">
+    <div class="bl-section-head">
+      <h2>Recent tickets</h2>
+      <a routerLink="/admin/tickets" class="bl-section-link">View all <app-icon name="arrow-right" [size]="14" /></a>
+    </div>
+    @if (ticketsLoading()) {
+    <div class="bl-card">
+      @for (i of [1,2,3,4]; track i) {
+      <div class="bl-skel-row">
+        <div class="bl-skeleton" style="height: 14px; width: 110px;"></div>
+        <div class="bl-skeleton" style="height: 14px; width: 50%;"></div>
+        <div class="bl-skeleton" style="height: 22px; width: 80px; border-radius: 999px;"></div>
+      </div>
+      }
+    </div>
+    } @else {
+    <div class="bl-card bl-table">
+      <div class="bl-thead">
+        <span>Priority</span><span>Ticket</span><span>Subject</span><span>Author</span><span>Category</span><span>Status</span><span>Updated</span>
+      </div>
+      @for (t of recentTickets(); track t.id) {
+      <a [routerLink]="['/admin/tickets', t.id]" class="bl-trow bl-hover-lift">
+        <app-badge kind="priority" [value]="t.priority" [dot]="true"
+          [solid]="t.priority === 'Critical' || t.priority === 'High'" />
+        <span class="bl-tcode bl-mono-nums">{{ t.ticketCode }}</span>
+        <span class="bl-tsubj">
+          <span class="bl-tsubj-text">{{ t.subject }}</span>
+          <span class="bl-tbook">{{ t.bookTitle || 'General' }}</span>
+        </span>
+        <span class="bl-tauthor">{{ t.authorName }}</span>
+        <app-badge kind="category" [value]="t.category" />
+        <app-badge kind="status" [value]="t.status" [dot]="true" />
+        <span class="bl-tupdated">{{ t.updatedAt | blTimeAgo }}</span>
+      </a>
+      }
+    </div>
+    }
+  </section>
+</div>

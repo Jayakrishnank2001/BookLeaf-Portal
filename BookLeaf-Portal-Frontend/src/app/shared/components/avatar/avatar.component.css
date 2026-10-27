@@ -1,0 +1,11 @@
+.bl-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  flex: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+}

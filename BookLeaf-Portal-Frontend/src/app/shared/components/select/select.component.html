@@ -1,0 +1,21 @@
+<div class="bl-select" [class.bl-select-open]="open()" [class.bl-select-block]="block"
+  [style.width]="block ? '100%' : null">
+  <button type="button" class="bl-select-trigger bl-input" (click)="toggle()" [attr.aria-expanded]="open()"
+    [attr.aria-haspopup]="'listbox'" [disabled]="disabled">
+    <span class="bl-select-label" [class.bl-select-placeholder]="!selected">
+      {{ selected ? selectedLabel : placeholder }}
+    </span>
+    <app-icon class="bl-select-chev" name="chevron-down" [size]="16" />
+  </button>
+  @if (open()) {
+  <div class="bl-select-menu bl-animate-scale" role="listbox" [style.width.px]="width">
+    @for (opt of options; track opt.value) {
+    <button type="button" role="option" [attr.aria-selected]="opt.value === value" class="bl-select-opt"
+      [class.bl-select-active]="opt.value === value" [class.bl-select-disabled]="opt.disabled" [disabled]="opt.disabled"
+      (click)="choose(opt)">
+      {{ opt.label }}
+    </button>
+    }
+  </div>
+  }
+</div>

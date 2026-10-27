@@ -1,0 +1,122 @@
+<div class="bl-page bl-animate-in">
+  <a routerLink="/author/tickets" class="bl-back"><app-icon name="arrow-left" [size]="15" /> Back to tickets</a>
+
+  @if (loading()) {
+  <div class="bl-card" style="padding: 24px;">
+    <div class="bl-skeleton" style="height: 24px; width: 50%;"></div>
+    <div class="bl-skeleton" style="height: 14px; width: 80%; margin-top: 12px;"></div>
+  </div>
+  } @else if (!ticket()) {
+  <div class="bl-card bl-empty">
+    <app-icon name="ticket" [size]="28" />
+    <h3>Ticket not found</h3>
+    <a routerLink="/author/tickets" class="bl-btn bl-btn-ghost">Back to tickets</a>
+  </div>
+  } @else {
+  <div class="bl-grid">
+    <!-- Main conversation -->
+    <section class="bl-main">
+      <div class="bl-card bl-header-card">
+        <div class="bl-header-top">
+          <span class="bl-header-code bl-mono-nums">{{ ticket()!.ticketCode }}</span>
+          <div class="bl-header-badges">
+            <app-badge kind="status" [value]="ticket()!.status" [dot]="true" />
+            <app-badge kind="priority" [value]="ticket()!.priority" [dot]="true" [solid]="isUrgent()" />
+          </div>
+        </div>
+        <h1>{{ ticket()!.subject }}</h1>
+        <div class="bl-header-meta">
+          <app-badge kind="category" [value]="ticket()!.category" />
+          <span class="bl-live"><span class="bl-live-dot"></span> Live — new responses can appear here without
+            refreshing</span>
+        </div>
+      </div>
+
+      <div class="bl-card bl-conv">
+        <div class="bl-conv-scroll">
+          @for (msg of ticket()!.messages; track msg.id) {
+          <div class="bl-msg" [class.bl-msg-mine]="msg.authorRole === 'author'">
+            <div class="bl-msg-head">
+              <app-avatar [initials]="initials(msg.authorName)" [color]="colorFor(msg)" [size]="30" />
+              <div class="bl-msg-meta">
+                <span class="bl-msg-name">{{ msg.authorName }}{{ msg.authorRole === 'author' ? ' (you)' : '' }}</span>
+                <span class="bl-msg-time">{{ msg.createdAt | blDate:'datetime' }}</span>
+              </div>
+            </div>
+            <div class="bl-msg-body">{{ msg.content }}</div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Reply -->
+      @if (ticket()!.status === 'Closed') {
+      <div class="bl-card bl-closed">
+        <app-icon name="lock" [size]="18" />
+        This ticket has been closed. If you need further help, please raise a new query.
+      </div>
+      } @else {
+      <div class="bl-card bl-reply">
+        <h3>Reply to this ticket</h3>
+        <textarea class="bl-input bl-textarea" rows="4" [(ngModel)]="replyText" placeholder="Write your reply\u2026"
+          [disabled]="sending()"></textarea>
+        <div class="bl-reply-actions">
+          <span class="bl-reply-hint">Replies are visible to the BookLeaf support team.</span>
+          <button class="bl-btn bl-btn-primary" (click)="sendReply()" [disabled]="sending() || !replyText.trim()">
+            @if (sending()) { <span class="bl-spinner"></span> Sending\u2026 }
+            @else { <app-icon name="send" [size]="16" /> Send reply }
+          </button>
+        </div>
+      </div>
+      }
+    </section>
+
+    <!-- Side panel -->
+    <aside class="bl-side">
+      <div class="bl-card bl-side-card">
+        <h3 class="bl-side-title">Ticket details</h3>
+        <dl class="bl-side-list">
+          <div>
+            <dt>Status</dt>
+            <dd><app-badge kind="status" [value]="ticket()!.status" [dot]="true" /></dd>
+          </div>
+          <div>
+            <dt>Priority</dt>
+            <dd><app-badge kind="priority" [value]="ticket()!.priority" [dot]="true" /></dd>
+          </div>
+          <div>
+            <dt>Category</dt>
+            <dd><app-badge kind="category" [value]="ticket()!.category" /></dd>
+          </div>
+          <div>
+            <dt>Created</dt>
+            <dd>{{ ticket()!.createdAt | blDate:'datetime' }}</dd>
+          </div>
+          <div>
+            <dt>Last updated</dt>
+            <dd>{{ ticket()!.updatedAt | blDate:'datetime' }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      @if (ticket()!.bookTitle) {
+      <div class="bl-card bl-side-card">
+        <h3 class="bl-side-title">Related book</h3>
+        <a [routerLink]="['/author/books', ticket()!.bookId!]" class="bl-side-book">
+          <app-icon name="book" [size]="18" />
+          <div>
+            <strong>{{ ticket()!.bookTitle }}</strong>
+            <span>View book details</span>
+          </div>
+        </a>
+      </div>
+      }
+
+      <div class="bl-card bl-side-card bl-side-tip">
+        <app-icon name="sparkles" [size]="18" />
+        <p>Your query is being reviewed by the BookLeaf support team. You'll see responses here as they arrive.</p>
+      </div>
+    </aside>
+  </div>
+  }
+</div>

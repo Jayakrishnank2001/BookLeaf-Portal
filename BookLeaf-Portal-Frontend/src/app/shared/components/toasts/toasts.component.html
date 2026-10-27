@@ -1,0 +1,19 @@
+<div class="bl-toast-stack" role="region" aria-live="polite" aria-label="Notifications">
+  @for (t of svc.toasts(); track t.id) {
+  <div class="bl-toast bl-animate-in" [class.bl-toast-error]="t.type==='error'"
+    [class.bl-toast-warning]="t.type==='warning'" [class.bl-toast-info]="t.type==='info'">
+    <span class="bl-toast-icon">
+      @switch (t.type) {
+      @case ('success') { <app-icon name="success" [size]="18" /> }
+      @case ('error') { <app-icon name="alert" [size]="18" /> }
+      @case ('warning') { <app-icon name="warning" [size]="18" /> }
+      @case ('info') { <app-icon name="info" [size]="18" /> }
+      }
+    </span>
+    <span class="bl-toast-text">{{ t.text }}</span>
+    <button class="bl-toast-close" (click)="svc.dismiss(t.id)" aria-label="Dismiss">
+      <app-icon name="close" [size]="14" />
+    </button>
+  </div>
+  }
+</div>

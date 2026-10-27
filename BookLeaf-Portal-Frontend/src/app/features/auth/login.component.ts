@@ -34,11 +34,6 @@ export class LoginComponent {
     { icon: 'sparkles' as const, color: 'var(--color-accent)', title: 'AI-assisted support', body: 'Smart classification and response drafts for faster replies.' },
   ];
 
-  fill(email: string, _role: string) {
-    this.form.patchValue({ email, password: 'bookleaf123' });
-    this.formError.set(null);
-  }
-
   showErr(field: 'email' | 'password'): boolean {
     const c = this.form.controls[field];
     return c.invalid && (c.touched || c.dirty);

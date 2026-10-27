@@ -60,9 +60,6 @@ export class AdminTicketsComponent implements OnInit {
   assignedOptions: DropdownOption[] = [
     { value: '', label: 'Anyone' },
     { value: 'unassigned', label: 'Unassigned' },
-    { value: 'u-admin', label: 'Aman Verma' },
-    { value: 'u-admin2', label: 'Rhea Kapoor' },
-    { value: 'u-admin3', label: 'Suresh Pillai' },
   ];
   dateOptions: DropdownOption[] = [
     { value: '', label: 'Any time' },

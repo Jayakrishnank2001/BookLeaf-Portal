@@ -26,7 +26,7 @@ export class AuthService {
     return of(user).pipe(
       delay(700),
       map((u) => {
-        if (!u) throw new Error('No account found with that email. Try priya.sharma@email.com or admin@bookleaf.com.');
+        if (!u) throw new Error('No account found with that email. Please verify your credentials or contact support.');
         localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
         this.currentUser.set(u);
         return u;

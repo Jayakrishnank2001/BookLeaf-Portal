@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { delay, map } from 'rxjs/operators';
 import { Ticket, TicketMessage, TicketStatus, TicketPriority, TicketCategory, AIClassification } from '../models/models';
@@ -66,11 +66,6 @@ export class TicketService {
       ],
       internalNotes: [],
       aiClassification: ai,
-      aiDraft: {
-        content: 'Thank you for contacting BookLeaf Author Support. We have received your query and will respond within one business day.',
-        generatedAt: now,
-        source: 'Ticket context + BookLeaf Knowledge Base',
-      },
     };
     MOCK_TICKETS.unshift(ticket);
     this.realtime.emit('ticket:created', ticket);
@@ -90,38 +85,13 @@ export class TicketService {
     return of(ticket).pipe(delay(400));
   }
 
-  private mockClassification(subject: string, description: string): AIClassification {
-    const text = (subject + ' ' + description).toLowerCase();
-    let category: TicketCategory = 'General Inquiry';
-    let priority: TicketPriority = 'Medium';
-    let reason = 'Author request does not match a specific incident category.';
-    if (/royal|payment|payout|pending/.test(text)) {
-      category = 'Royalty & Payments';
-      priority = 'High';
-      reason = 'Author reports a potentially overdue royalty payment.';
-    } else if (/isbn|metadata|listing/.test(text)) {
-      category = 'ISBN & Metadata Issues';
-      priority = 'Medium';
-      reason = 'Author reports an ISBN or metadata issue.';
-    } else if (/print|quality|cover|binding|spine/.test(text)) {
-      category = 'Printing & Quality';
-      priority = 'Medium';
-      reason = 'Author reports a printing or quality defect.';
-    } else if (/flipkart|amazon|distribut|available|listing/.test(text)) {
-      category = 'Distribution & Availability';
-      priority = 'Low';
-      reason = 'Author reports missing availability on a retail channel.';
-    } else if (/production|cover design|typesetting|editing|delay/.test(text)) {
-      category = 'Book Status & Production Updates';
-      priority = 'Critical';
-      reason = 'Author reports a missed production milestone with no update.';
-    }
+  private mockClassification(_subject: string, _description: string): AIClassification {
     return {
-      category,
-      categoryConfidence: 88 + Math.floor(Math.random() * 10),
-      categoryReason: reason,
-      priority,
-      priorityConfidence: 85 + Math.floor(Math.random() * 12),
+      category: 'General Inquiry',
+      categoryConfidence: 0,
+      categoryReason: '',
+      priority: 'Medium',
+      priorityConfidence: 0,
     };
   }
 

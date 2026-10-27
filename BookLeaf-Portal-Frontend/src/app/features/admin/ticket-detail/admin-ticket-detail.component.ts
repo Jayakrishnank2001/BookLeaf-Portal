@@ -15,13 +15,13 @@ interface Metric {
 }
 
 @Component({
-  selector: 'app-admin-dashboard',
+  selector: 'app-admin-ticket-detail',
   standalone: true,
   imports: [RouterLink, IconComponent, BadgeComponent, TimeAgoPipe],
   templateUrl: './admin-ticket-detail.component.html',
   styleUrls: ['./admin-ticket-detail.component.css'],
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdminTicketDetailComponent implements OnInit {
   private adminSvc = inject(AdminTicketService);
 
   activityLoading = signal(true);
@@ -48,8 +48,7 @@ export class AdminDashboardComponent implements OnInit {
     return [
       { label: 'Critical', count: m.critical, color: 'var(--color-critical)', pct: (m.critical / total) * 100 },
       { label: 'High', count: m.high, color: 'var(--color-high)', pct: (m.high / total) * 100 },
-      { label: 'Medium', count: 2, color: 'var(--color-medium)', pct: (2 / total) * 100 },
-      { label: 'Low', count: 1, color: 'var(--color-low)', pct: (1 / total) * 100 },
+
     ];
   });
 

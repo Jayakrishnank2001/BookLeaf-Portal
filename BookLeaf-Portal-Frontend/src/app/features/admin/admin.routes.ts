@@ -27,7 +27,7 @@ export const ADMIN_ROUTES: Routes = [
         path: 'tickets/:id',
         loadComponent: () =>
           import('./ticket-detail/admin-ticket-detail.component').then(
-            (m) => m.AdminDashboardComponent
+            (m) => m.AdminTicketDetailComponent
           ),
       },
     ],

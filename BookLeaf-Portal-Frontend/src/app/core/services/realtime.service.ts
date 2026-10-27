@@ -27,23 +27,8 @@ export class RealtimeService {
     this.events$.next({ name, ticket });
   }
 
-  // Simulate an incoming admin message appearing on an open ticket (demo of live updates)
-  simulateIncoming(ticket: Ticket, adminName: string) {
-    const updated: Ticket = {
-      ...ticket,
-      messages: [
-        ...ticket.messages,
-        {
-          id: 'm-live-' + Date.now(),
-          authorId: 'u-admin',
-          authorName: adminName,
-          authorRole: 'admin',
-          content: 'Just confirming — I am reviewing your request now and will share an update shortly.',
-          createdAt: new Date().toISOString(),
-        },
-      ],
-      updatedAt: new Date().toISOString(),
-    };
-    this.emit('ticket:message', updated);
+  // Placeholder for simulated incoming messages — will be replaced by real WebSocket backend
+  simulateIncoming(_ticket: Ticket, _adminName: string) {
+    // No-op until backend realtime connection is implemented
   }
 }

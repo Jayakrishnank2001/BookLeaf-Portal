@@ -9,6 +9,9 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+// Behind a proxy on Render/Railway: needed so rate limiting sees the real client IP.
+app.set('trust proxy', 1);
+
 // --- Global middleware ---
 app.use(helmet());
 app.use(cors({ origin: env.corsOrigin, credentials: true }));
@@ -21,8 +24,7 @@ app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
-// Feature routes get mounted here in later commits:
-// app.use('/api/v1', require('./routes'));
+app.use('/api/v1', require('./routes'));
 
 // --- Error handling (must be last) ---
 app.use(notFound);

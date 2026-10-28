@@ -18,7 +18,7 @@
         <header class="bl-header"> <button class="bl-menu-btn" (click)="mobileOpen.set(true)" aria-label="Open menu">
                 <app-icon name="menu" [size]="22" /> </button>
             <div class="bl-conn" [class.bl-conn-off]="!realtime.connected()"> <span class="bl-conn-dot"></span> {{
-                realtime.connected() ? 'Connected' : 'Reconnecting\u2026' }} </div>
+                realtime.connected() ? 'Connected' : 'Reconnecting' }} </div>
             <div class="bl-header-actions"> <button class="bl-icon-btn" aria-label="Notifications" (click)="bell()">
                     <app-icon name="bell" [size]="20" /> <span class="bl-bell-dot"></span> </button>
                 <div class="bl-profile"> <app-avatar [initials]="user?.initials ?? ''"

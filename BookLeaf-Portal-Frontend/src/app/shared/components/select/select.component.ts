@@ -17,7 +17,7 @@ export interface DropdownOption {
 export class SelectComponent {
   @Input() value: string | null = null;
   @Input() options: DropdownOption[] = [];
-  @Input() placeholder = 'Select\u2026';
+  @Input() placeholder = 'Select';
   @Input() block = false;
   @Input() disabled = false;
   @Input() width: number | null = null;

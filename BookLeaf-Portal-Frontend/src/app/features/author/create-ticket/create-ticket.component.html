@@ -29,7 +29,7 @@
   <form [formGroup]="form" (ngSubmit)="submit()" class="bl-card bl-form-card" novalidate>
     <div class="bl-field">
       <label class="bl-label" for="book">Related book</label>
-      <app-select [value]="selectedBookId()" [options]="bookOptions" placeholder="Select a book\u2026"
+      <app-select [value]="selectedBookId()" [options]="bookOptions" placeholder="Select a book"
         (valueChange)="onBookSelect($event)" [block]="true" />
       <span class="bl-field-hint">Choose "General / Account Level" if your query isn't about a specific book.</span>
     </div>
@@ -44,7 +44,7 @@
     <div class="bl-field">
       <label class="bl-label" for="description">Description</label>
       <textarea id="description" class="bl-input bl-textarea" rows="6" formControlName="description"
-        placeholder="Describe your issue in as much detail as you can\u2026"
+        placeholder="Describe your issue in as much detail as you can"
         [class.bl-input-err]="showErr('description')"></textarea>
       @if (showErr('description')) { <span class="bl-field-err">Please describe your query.</span> }
     </div>
@@ -80,7 +80,7 @@
     <div class="bl-form-actions">
       <a routerLink="/author/tickets" class="bl-btn bl-btn-ghost">Cancel</a>
       <button type="submit" class="bl-btn bl-btn-primary" [disabled]="loading()">
-        @if (loading()) { <span class="bl-spinner"></span> Submitting\u2026 }
+        @if (loading()) { <span class="bl-spinner"></span> Submitting }
         @else { <app-icon name="send" [size]="16" /> Submit Query }
       </button>
     </div>

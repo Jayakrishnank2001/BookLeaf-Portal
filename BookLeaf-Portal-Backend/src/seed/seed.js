@@ -12,6 +12,7 @@ const { ROLES } = require('../config/constants');
 const Author = require('../models/Author');
 const Book = require('../models/Book');
 const User = require('../models/User');
+const Ticket = require('../models/Ticket');
 
 const AUTHOR_PASSWORD = process.env.SEED_AUTHOR_PASSWORD || 'Author@123';
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'Admin@123';
@@ -29,7 +30,12 @@ async function seed() {
   const raw = fs.readFileSync(path.join(__dirname, 'bookleaf_sample_data.json'), 'utf8');
   const { authors } = JSON.parse(raw);
 
-  await Promise.all([User.deleteMany({}), Book.deleteMany({}), Author.deleteMany({})]);
+  await Promise.all([
+    User.deleteMany({}),
+    Book.deleteMany({}),
+    Author.deleteMany({}),
+    Ticket.deleteMany({}),
+  ]);
 
   // Hash once and reuse: all seed accounts share a dev password per role.
   const authorHash = await bcrypt.hash(AUTHOR_PASSWORD, 10);

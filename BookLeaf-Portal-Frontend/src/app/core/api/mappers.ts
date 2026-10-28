@@ -121,7 +121,7 @@ export function toAdminTicket(api: ApiAdminTicket): Ticket {
         }
       : undefined,
     aiDraft: api.draftResponse
-      ? { content: api.draftResponse, generatedAt: api.updatedAt, source: 'Backend AI' }
+      ? { content: api.draftResponse?.text || '', generatedAt: api.draftResponse?.generatedAt || api.updatedAt, source: 'Backend AI' }
       : undefined,
   };
 }

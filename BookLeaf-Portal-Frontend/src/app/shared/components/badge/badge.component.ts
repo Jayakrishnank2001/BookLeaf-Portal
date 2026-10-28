@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { TicketStatus, TicketPriority, TicketCategory, BookStatus } from '../../../core/models/models';
 
 type BadgeKind = 'status' | 'priority' | 'category' | 'book-status';
@@ -9,7 +9,7 @@ type BadgeKind = 'status' | 'priority' | 'category' | 'book-status';
   templateUrl: './badge.component.html',
   styleUrls: ['./badge.component.css'],
 })
-export class BadgeComponent {
+export class BadgeComponent implements OnChanges {
   @Input() kind: BadgeKind = 'status';
   @Input() value: string = '';
   @Input() dot = false;
@@ -19,7 +19,9 @@ export class BadgeComponent {
   bg = '';
   border = '';
 
-  ngOnInit() {
+  // ngOnChanges (not ngOnInit) so the colours follow the value when a status/priority
+  // is changed while the badge is already on screen.
+  ngOnChanges() {
     const p = this.palette();
     this.fg = p.fg;
     this.bg = this.solid ? p.fg : p.bg;

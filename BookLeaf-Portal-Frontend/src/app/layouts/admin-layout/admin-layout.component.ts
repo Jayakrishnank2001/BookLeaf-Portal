@@ -44,16 +44,6 @@ export class AdminLayoutComponent {
             label: 'My Assigned',
             route: '/admin/tickets?assigned=me',
             icon: 'list'
-        },
-        {
-            label: 'Analytics',
-            route: '/admin/dashboard#analytics',
-            icon: 'activity'
-        },
-        {
-            label: 'Settings',
-            route: '/admin/dashboard#settings',
-            icon: 'settings'
         },];
 
     logout() {

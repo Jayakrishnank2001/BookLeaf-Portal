@@ -75,7 +75,7 @@ export interface ApiAdminTicket {
     priorityConfidence: number;
     classifiedBy: string;
   } | null;
-  draftResponse: string | null;
+  draftResponse: { text: string; generatedAt: string } | null;
   internalNotes: {
     id: string;
     adminId: string;
@@ -102,7 +102,7 @@ export interface ApiAdminTicketList {
 }
 
 export interface ApiAIDraft {
-  content: string;
+  text: string;
   generatedAt: string;
-  source: string;
+  cached: boolean;
 }

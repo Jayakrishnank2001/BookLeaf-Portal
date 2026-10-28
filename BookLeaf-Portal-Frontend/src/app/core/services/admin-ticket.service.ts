@@ -118,7 +118,11 @@ export class AdminTicketService {
         params: { regenerate: String(regenerate) },
       })
       .pipe(
-        map((res) => res.draft),
+        map((res) => ({
+          content: res.draft.text,
+          generatedAt: res.draft.generatedAt,
+          source: 'Backend AI',
+        })),
         catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Failed to load AI draft')))),
       );
   }

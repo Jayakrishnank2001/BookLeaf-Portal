@@ -3,208 +3,286 @@
   <div class="bl-card bl-empty">
     <app-icon name="alert" [size]="30" />
     <h3>{{ error() }}</h3>
-    <button class="bl-btn bl-btn-primary" (click)="ngOnInit()">Try again</button>
+    <div class="bl-empty-actions">
+      <button class="bl-btn bl-btn-primary" (click)="load()"><app-icon name="refresh" [size]="16" /> Try again</button>
+      <a routerLink="/admin/tickets" class="bl-btn bl-btn-ghost">Back to queue</a>
+    </div>
   </div>
   } @else if (loading()) {
-  <div class="bl-card bl-empty">
-    <app-icon name="activity" [size]="30" />
-    <h3>Loading ticket...</h3>
+  <div class="bl-grid">
+    <div class="bl-main">
+      <div class="bl-card bl-header-card">
+        <div class="bl-skeleton" style="height: 18px; width: 120px; margin-bottom: 14px"></div>
+        <div class="bl-skeleton" style="height: 28px; width: 70%; margin-bottom: 14px"></div>
+        <div class="bl-skeleton" style="height: 16px; width: 50%"></div>
+      </div>
+      <div class="bl-card bl-conv">
+        <div class="bl-skeleton" style="height: 90px"></div>
+      </div>
+      <div class="bl-card bl-reply">
+        <div class="bl-skeleton" style="height: 180px"></div>
+      </div>
+    </div>
+    <aside class="bl-side">
+      <div class="bl-card bl-side-card"><div class="bl-skeleton" style="height: 210px"></div></div>
+      <div class="bl-card bl-side-card"><div class="bl-skeleton" style="height: 90px"></div></div>
+    </aside>
   </div>
-  } @else {
-  <header class="bl-page-head">
-    <div>
-      <p class="bl-page-eyebrow">Ticket Workspace</p>
-      <h1>{{ ticket()?.ticketCode }}</h1>
-      <p class="bl-page-sub">{{ ticket()?.subject }}</p>
-    </div>
-    <a routerLink="/admin/tickets" class="bl-btn bl-btn-ghost">
-      <app-icon name="list" [size]="18" /> Back to queue
-    </a>
-  </header>
+  } @else if (ticket(); as t) {
+  <a routerLink="/admin/tickets" class="bl-back"><app-icon name="arrow-left" [size]="16" /> Back to queue</a>
 
-  <div class="bl-grid-2">
-    <section class="bl-card bl-panel">
-      <div class="bl-panel-head">
-        <h2><app-icon name="ticket" [size]="18" /> Ticket details</h2>
-      </div>
-
-      <div class="bl-detail-row">
-        <span class="bl-detail-label">Status</span>
-        <select class="bl-select" [(ngModel)]="statusSelection" (change)="updateStatus(statusSelection)">
-          @for (opt of statusOptions; track opt.value) {
-          <option [value]="opt.value">{{ opt.label }}</option>
-          }
-        </select>
-      </div>
-
-      <div class="bl-detail-row">
-        <span class="bl-detail-label">Priority</span>
-        <select class="bl-select" [(ngModel)]="prioritySelection" (change)="overrideClassification(undefined, prioritySelection)">
-          @for (opt of priorityOptions; track opt.value) {
-          <option [value]="opt.value">{{ opt.label }}</option>
-          }
-        </select>
-      </div>
-
-      <div class="bl-detail-row">
-        <span class="bl-detail-label">Category</span>
-        <span class="bl-detail-value">{{ ticket()?.category }}</span>
-      </div>
-
-      <div class="bl-detail-row">
-        <span class="bl-detail-label">Author</span>
-        <span class="bl-detail-value">{{ ticket()?.authorName }}</span>
-      </div>
-
-      <div class="bl-detail-row">
-        <span class="bl-detail-label">Book</span>
-        <span class="bl-detail-value">{{ ticket()?.bookTitle || 'General / Account Level' }}</span>
-      </div>
-
-      <div class="bl-detail-row">
-        <span class="bl-detail-label">Assigned to</span>
-        <span class="bl-detail-value">{{ ticket()?.assignedToName || 'Unassigned' }}</span>
-        <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showAssign.set(true)">
-          {{ ticket()?.assignedToName ? 'Change' : 'Assign' }}
-        </button>
-      </div>
-
-      <div class="bl-detail-row">
-        <span class="bl-detail-label">Created</span>
-        <span class="bl-detail-value">{{ ticket()?.createdAt | blDate:'short' }}</span>
-      </div>
-
-      <div class="bl-detail-row">
-        <span class="bl-detail-label">Updated</span>
-        <span class="bl-detail-value">{{ ticket()?.updatedAt | blDate:'short' }}</span>
-      </div>
-    </section>
-
-    <section class="bl-card bl-panel">
-      <div class="bl-panel-head">
-        <h2><app-icon name="note" [size]="18" /> Description</h2>
-      </div>
-      <div class="bl-detail-body">{{ ticket()?.description }}</div>
-    </section>
-  </div>
-
-  <section class="bl-card bl-panel bl-full-width">
-    <div class="bl-panel-head">
-      <h2><app-icon name="message" [size]="18" /> Conversation</h2>
-    </div>
-
-    <div class="bl-message-list">
-      @for (msg of ticket()?.messages ?? []; track msg.id) {
-      <div class="bl-message bl-message-{{ msg.authorRole }}">
-        <div class="bl-message-header">
-          <span class="bl-message-from">{{ msg.authorName }}</span>
-          <span class="bl-message-time">{{ msg.createdAt | blDate:'short' }}</span>
+  <div class="bl-grid">
+    <!-- ============================== MAIN ============================== -->
+    <div class="bl-main">
+      <header class="bl-card bl-header-card">
+        <div class="bl-header-top">
+          <span class="bl-header-code bl-mono-nums">{{ t.ticketCode }}</span>
+          <div class="bl-header-badges">
+            <app-badge kind="status" [value]="t.status" [dot]="true" />
+            <app-badge kind="priority" [value]="t.priority" [dot]="true" [solid]="isUrgent(t.priority)" />
+            <app-badge kind="category" [value]="t.category" />
+          </div>
         </div>
-        <div class="bl-message-body">{{ msg.content }}</div>
-      </div>
-      }
-    </div>
-
-    <div class="bl-reply-box">
-      <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showReplyBox.set(true)">
-        <app-icon name="mail" [size]="16" /> Reply to author
-      </button>
-    </div>
-
-    @if (showReplyBox()) {
-    <div class="bl-reply-overlay">
-      <div class="bl-reply-card">
-        <div class="bl-reply-header">
-          <app-icon name="mail" [size]="16" />
-          <span>Send reply to author</span>
-          <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showReplyBox.set(false)"><app-icon name="close" [size]="16" /></button>
+        <h1>{{ t.subject }}</h1>
+        <div class="bl-header-meta">
+          <span class="bl-meta">
+            <app-avatar [initials]="initials(t.authorName)" [color]="avatarColor(t.authorName)" [size]="22" />
+            {{ t.authorName }}
+          </span>
+          <span class="bl-meta"><app-icon name="book" [size]="15" /> {{ t.bookTitle || 'General / Account Level' }}</span>
+          <span class="bl-meta"><app-icon name="clock" [size]="15" /> Opened {{ t.createdAt | blTimeAgo }}</span>
+          @if (waiting(); as w) {
+          <span class="bl-chip" [class.bl-chip-danger]="w.severe" [class.bl-chip-warn]="!w.severe">
+            <app-icon name="alert" [size]="13" /> Waiting {{ w.days }} days
+          </span>
+          }
+          @if (!t.assignedTo && t.status !== 'Resolved' && t.status !== 'Closed') {
+          <span class="bl-chip">Unassigned</span>
+          }
         </div>
-        <textarea class="bl-textarea" [(ngModel)]="replyMessage" placeholder="Type your reply..."></textarea>
+      </header>
+
+      <!-- Conversation -->
+      <section class="bl-card bl-conv">
+        <div class="bl-card-head">
+          <h2><app-icon name="message" [size]="18" /> Conversation</h2>
+          <span class="bl-count">{{ thread().length }} {{ thread().length === 1 ? 'message' : 'messages' }}</span>
+        </div>
+        <div class="bl-conv-scroll">
+          @for (msg of thread(); track msg.id) {
+          <div class="bl-msg" [class.bl-msg-mine]="msg.authorRole === 'admin'">
+            <div class="bl-msg-head">
+              <app-avatar [initials]="initials(msg.authorName)" [color]="colorFor(msg)" [size]="32" />
+              <div class="bl-msg-meta">
+                <span class="bl-msg-name">
+                  {{ msg.authorName }}
+                  @if (msg.authorRole === 'admin') { <span class="bl-role">BookLeaf team</span> }
+                </span>
+                <span class="bl-msg-time">{{ msg.createdAt | blDate:'datetime' }}</span>
+              </div>
+            </div>
+            <div class="bl-msg-body">{{ msg.content }}</div>
+          </div>
+          }
+        </div>
+      </section>
+
+      <!-- Reply composer with AI draft -->
+      <section class="bl-card bl-reply">
+        <div class="bl-card-head">
+          <h2><app-icon name="mail" [size]="18" /> Reply to author</h2>
+          <span class="bl-visibility"><app-icon name="eye" [size]="14" /> Visible to {{ t.authorName.split(' ')[0] }}</span>
+        </div>
+
+        @if (isClosed()) {
+        <div class="bl-closed">
+          <app-icon name="lock" [size]="18" />
+          <span>This ticket is closed. Change the status to <strong>Open</strong> or <strong>In Progress</strong> to reply.</span>
+        </div>
+        } @else {
+        <div class="bl-draft" [class.bl-draft-ready]="draft() && !draftLoading()">
+          @if (draftLoading()) {
+          <div class="bl-draft-head">
+            <span class="bl-draft-title"><app-icon name="sparkles" [size]="16" /> Drafting a reply from the knowledge base&hellip;</span>
+          </div>
+          <div class="bl-draft-skel">
+            <div class="bl-skeleton" style="height: 12px; width: 92%"></div>
+            <div class="bl-skeleton" style="height: 12px; width: 84%"></div>
+            <div class="bl-skeleton" style="height: 12px; width: 60%"></div>
+          </div>
+          } @else if (draft(); as d) {
+          <div class="bl-draft-head">
+            <span class="bl-draft-title"><app-icon name="sparkles" [size]="16" /> AI-suggested reply</span>
+            <span class="bl-draft-meta">Generated {{ d.generatedAt | blTimeAgo }}</span>
+          </div>
+          <div class="bl-draft-body">{{ d.content }}</div>
+          <div class="bl-draft-actions">
+            <button type="button" class="bl-btn bl-btn-soft bl-btn-sm" (click)="useDraft()">
+              <app-icon name="copy" [size]="15" /> Use this draft
+            </button>
+            <button type="button" class="bl-btn bl-btn-ghost bl-btn-sm" (click)="generateDraft(true)">
+              <app-icon name="refresh" [size]="15" /> Regenerate
+            </button>
+            @if (draftInserted()) {
+            <span class="bl-draft-ok"><app-icon name="check" [size]="14" /> Added below. Review and edit before sending.</span>
+            }
+          </div>
+          } @else if (draftUnavailable()) {
+          <div class="bl-draft-head">
+            <span class="bl-draft-title bl-draft-title-warn"><app-icon name="info" [size]="16" /> AI drafting is unavailable right now</span>
+          </div>
+          <p class="bl-draft-text">No problem: write your reply below. You can try the AI draft again at any time.</p>
+          <div class="bl-draft-actions">
+            <button type="button" class="bl-btn bl-btn-ghost bl-btn-sm" (click)="generateDraft(false)">
+              <app-icon name="refresh" [size]="15" /> Try again
+            </button>
+          </div>
+          } @else {
+          <div class="bl-draft-head">
+            <span class="bl-draft-title"><app-icon name="sparkles" [size]="16" /> AI draft</span>
+          </div>
+          <p class="bl-draft-text">Generate a reply based on the author's query and the BookLeaf knowledge base.</p>
+          <div class="bl-draft-actions">
+            <button type="button" class="bl-btn bl-btn-soft bl-btn-sm" (click)="generateDraft(false)">
+              <app-icon name="sparkles" [size]="15" /> Generate draft
+            </button>
+          </div>
+          }
+        </div>
+
+        <textarea id="reply-box" class="bl-input bl-textarea" rows="8" [(ngModel)]="replyMessage"
+          placeholder="Write your reply, or use the AI draft above as a starting point&hellip;"
+          (keydown.control.enter)="sendReply()" (keydown.meta.enter)="sendReply()"></textarea>
+
         <div class="bl-reply-actions">
-          <button class="bl-btn bl-btn-ghost" (click)="showReplyBox.set(false)">Cancel</button>
-          <button class="bl-btn bl-btn-primary" [disabled]="!replyMessage.trim()" (click)="sendReply()">Send reply</button>
+          <label class="bl-check">
+            <input type="checkbox" [(ngModel)]="resolveAfterSend" />
+            <span>Mark as resolved after sending</span>
+          </label>
+          <div class="bl-reply-send">
+            <span class="bl-reply-hint">Ctrl + Enter to send</span>
+            <button type="button" class="bl-btn bl-btn-primary" [disabled]="!replyMessage().trim() || sendingReply()"
+              (click)="sendReply()">
+              @if (sendingReply()) { <span class="bl-spinner"></span> Sending&hellip; } @else {
+              <app-icon name="send" [size]="16" /> Send reply }
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
-    }
-  </section>
+        }
+      </section>
 
-  <section class="bl-card bl-panel bl-full-width">
-    <div class="bl-panel-head">
-      <h2><app-icon name="note" [size]="18" /> Internal Notes</h2>
-    </div>
-
-    <div class="bl-note-list">
-      @for (note of ticket()?.internalNotes ?? []; track note.id) {
-      <div class="bl-note-item">
-        <div class="bl-note-header">
-          <span class="bl-note-author">{{ note.authorName }}</span>
-          <span class="bl-note-time">{{ note.createdAt | blDate:'short' }}</span>
+      <!-- Internal notes -->
+      <section class="bl-card bl-notes">
+        <div class="bl-card-head">
+          <h2><app-icon name="lock" [size]="18" /> Internal notes</h2>
+          <span class="bl-private"><app-icon name="shield" [size]="14" /> Admins only. Never shown to the author</span>
         </div>
-        <div class="bl-note-body">{{ note.content }}</div>
-      </div>
-      }
-    </div>
 
-    <div class="bl-note-add">
-      @if (showNoteBox()) {
-      <div class="bl-note-editor">
-        <textarea class="bl-textarea" [(ngModel)]="noteContent" placeholder="Write an internal note (admin-only)..."></textarea>
-        <div class="bl-note-actions">
-          <button class="bl-btn bl-btn-ghost" (click)="showNoteBox.set(false)">Cancel</button>
-          <button class="bl-btn bl-btn-primary" [disabled]="!noteContent.trim()" (click)="addInternalNote()">Add note</button>
+        @if (t.internalNotes.length === 0) {
+        <p class="bl-notes-empty">No notes yet. Use notes to hand over context to your teammates.</p>
+        } @else {
+        <div class="bl-note-list">
+          @for (note of t.internalNotes; track note.id) {
+          <div class="bl-note">
+            <div class="bl-note-head">
+              <app-avatar [initials]="initials(note.authorName)" [color]="avatarColor(note.authorName)" [size]="24" />
+              <span class="bl-note-author">{{ note.authorName }}</span>
+              <span class="bl-note-time">{{ note.createdAt | blDate:'datetime' }}</span>
+            </div>
+            <div class="bl-note-body">{{ note.content }}</div>
+          </div>
+          }
         </div>
-      </div>
-      } @else {
-      <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showNoteBox.set(true)">
-        <app-icon name="plus" [size]="16" /> Add note
-      </button>
-      }
-    </div>
-  </section>
+        }
 
-  <section class="bl-card bl-panel bl-full-width">
-    <div class="bl-panel-head">
-      <h2><app-icon name="sparkles" [size]="18" /> AI Draft Response</h2>
+        <div class="bl-note-add">
+          <textarea class="bl-input bl-textarea" rows="3" [(ngModel)]="noteContent"
+            placeholder="Add a private note for the team&hellip;"></textarea>
+          <button type="button" class="bl-btn bl-btn-ghost" [disabled]="!noteContent().trim() || addingNote()"
+            (click)="addNote()">
+            @if (addingNote()) { <span class="bl-spinner bl-spinner-dark"></span> } @else { <app-icon name="plus" [size]="16" /> }
+            Add note
+          </button>
+        </div>
+      </section>
     </div>
-    @if (ticket()?.aiDraft) {
-    <div class="bl-draft-body">{{ ticket()?.aiDraft?.content }}</div>
-    <div class="bl-draft-meta">
-      Generated {{ ticket()?.aiDraft?.generatedAt | blDate:'short' }} via {{ ticket()?.aiDraft?.source }}
-    </div>
-    <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="regenerateDraft()">
-      <app-icon name="refresh" [size]="16" /> Regenerate
-    </button>
-    } @else {
-    <p class="bl-text-muted">No AI draft available yet.</p>
-    <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="regenerateDraft()">
-      <app-icon name="sparkles" [size]="16" /> Generate draft
-    </button>
-    }
-  </section>
 
-  @if (showAssign()) {
-  <div class="bl-overlay">
-    <div class="bl-assign-card">
-      <div class="bl-panel-head">
-        <h3>Assign ticket</h3>
-        <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showAssign.set(false)"><app-icon name="close" [size]="16" /></button>
-      </div>
-      <p class="bl-text-muted">Enter the admin user ID to assign this ticket:</p>
-      <input class="bl-input" [(ngModel)]="assignAdminId" placeholder="Admin user ID" />
-      <div class="bl-assign-actions">
-        <button class="bl-btn bl-btn-ghost" (click)="showAssign.set(false)">Cancel</button>
-        <button class="bl-btn bl-btn-primary" [disabled]="!assignAdminId.trim()" (click)="assignTicket(assignAdminId.trim())">Assign</button>
-      </div>
-    </div>
+    <!-- ============================== SIDE ============================== -->
+    <aside class="bl-side">
+      <section class="bl-card bl-side-card">
+        <h3 class="bl-side-title">Manage ticket</h3>
+
+        <div class="bl-field">
+          <span class="bl-label">Status</span>
+          <app-select [block]="true" [value]="t.status" [options]="statusOptions"
+            [disabled]="savingField() !== null" (valueChange)="onStatusChange($event)" />
+        </div>
+
+        <div class="bl-field">
+          <span class="bl-label">Priority</span>
+          <app-select [block]="true" [value]="t.priority" [options]="priorityOptions"
+            [disabled]="savingField() !== null" (valueChange)="onPriorityChange($event)" />
+          @if (aiHint('priority'); as hint) {
+          <p class="bl-ai-hint"><app-icon name="sparkles" [size]="12" /> {{ hint }}</p>
+          }
+        </div>
+
+        <div class="bl-field">
+          <span class="bl-label">Category</span>
+          <app-select [block]="true" [value]="t.category" [options]="categoryOptions"
+            [disabled]="savingField() !== null" (valueChange)="onCategoryChange($event)" />
+          @if (aiHint('category'); as hint) {
+          <p class="bl-ai-hint"><app-icon name="sparkles" [size]="12" /> {{ hint }}</p>
+          }
+        </div>
+      </section>
+
+      <section class="bl-card bl-side-card">
+        <h3 class="bl-side-title">Assignment</h3>
+        @if (t.assignedToName) {
+        <div class="bl-assignee">
+          <app-avatar [initials]="initials(t.assignedToName)" [color]="avatarColor(t.assignedToName)" [size]="34" />
+          <div>
+            <strong>{{ isAssignedToMe() ? 'You' : t.assignedToName }}</strong>
+            <span>{{ isAssignedToMe() ? 'This ticket is yours' : 'Currently assigned' }}</span>
+          </div>
+        </div>
+        } @else {
+        <p class="bl-unassigned"><app-icon name="user" [size]="16" /> Nobody is working on this yet.</p>
+        }
+        @if (!isAssignedToMe()) {
+        <button type="button" class="bl-btn bl-btn-soft bl-block" [disabled]="savingField() !== null"
+          (click)="assignToMe()">
+          <app-icon name="user" [size]="16" /> {{ t.assignedToName ? 'Take over' : 'Assign to me' }}
+        </button>
+        }
+      </section>
+
+      <section class="bl-card bl-side-card bl-ai-card">
+        <h3 class="bl-side-title"><app-icon name="sparkles" [size]="14" /> AI triage</h3>
+        @if (t.aiClassification; as ai) {
+        <dl class="bl-side-list">
+          <div><dt>Category</dt><dd>{{ ai.category }}</dd></div>
+          <div><dt>Priority</dt><dd>{{ ai.priority }}</dd></div>
+        </dl>
+        @if (ai.categoryReason) {
+        <p class="bl-ai-reason">{{ ai.categoryReason }}</p>
+        }
+        } @else {
+        <p class="bl-ai-reason bl-ai-reason-solo">AI triage isn't available for this ticket. Please set the category and priority above.</p>
+        }
+      </section>
+
+      <section class="bl-card bl-side-card">
+        <h3 class="bl-side-title">Details</h3>
+        <dl class="bl-side-list">
+          <div><dt>Author</dt><dd>{{ t.authorName }}</dd></div>
+          <div><dt>Book</dt><dd>{{ t.bookTitle || 'General / Account' }}</dd></div>
+          <div><dt>Created</dt><dd>{{ t.createdAt | blDate:'datetime' }}</dd></div>
+          <div><dt>Updated</dt><dd>{{ t.updatedAt | blTimeAgo }}</dd></div>
+        </dl>
+      </section>
+    </aside>
   </div>
-  }
-
-  @if (error()) {
-  <div class="bl-error-toast">
-    <span>{{ error() }}</span>
-    <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="error.set(null)">&times;</button>
-  </div>
-  }
   }
 </div>

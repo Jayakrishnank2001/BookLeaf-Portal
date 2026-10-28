@@ -7,5 +7,6 @@ const { ROLES } = require('../config/constants');
 router.use(authenticate, authorize(ROLES.AUTHOR));
 
 router.get('/', controller.listMine);
+router.get('/:id', controller.getMine);
 
 module.exports = router;

@@ -1,6 +1,10 @@
 // Explicit response shapes per role. Author serializers are allow-lists:
 // internalNotes, aiMeta, draftResponse, priority and adminIds can never leak by accident.
 
+// Human-friendly reference shown in both portals, e.g. "BL-2026-3F9A1". Derived from the
+// creation year and the tail of the ObjectId, so it needs no counter and never changes.
+const ticketCode = (t) => `BL-${new Date(t.createdAt).getFullYear()}-${String(t._id).slice(-5).toUpperCase()}`;
+
 const toAuthorBook = (b) => ({
   id: b._id,
   bookCode: b.bookCode,
@@ -16,11 +20,13 @@ const toAuthorBook = (b) => ({
   royaltyPaid: b.royaltyPaid,
   royaltyPending: b.royaltyPending,
   lastRoyaltyPayoutDate: b.lastRoyaltyPayoutDate,
+  printPartner: b.printPartner,
   availableOn: b.availableOn,
 });
 
 const toAuthorTicket = (t) => ({
   id: t._id,
+  ticketCode: ticketCode(t),
   subject: t.subject,
   description: t.description,
   status: t.status,
@@ -38,4 +44,4 @@ const toAuthorTicket = (t) => ({
   updatedAt: t.updatedAt,
 });
 
-module.exports = { toAuthorBook, toAuthorTicket };
+module.exports = { toAuthorBook, toAuthorTicket, ticketCode };

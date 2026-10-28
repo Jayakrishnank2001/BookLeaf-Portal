@@ -3,7 +3,6 @@ const Book = require('../models/Book');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { classifyTicket } = require('./ai/classification.service');
-const ticketAi = require('./ticketAi.service');
 
 const AUTHOR_HIDDEN_FIELDS = '-internalNotes -draftResponse -aiMeta -assignedTo -priority';
 
@@ -39,7 +38,9 @@ async function createForAuthor(authorId, { bookId, subject, description, attachm
   // (General Inquiry / Medium, classifiedBy: 'fallback') and AI classification updates them in
   // the background. If the AI call fails, those defaults stay and the ticket is flagged aiFailed.
   const ticket = await Ticket.create({ authorId, bookId, subject, description, attachments });
-  ticketAi.classifyInBackground(ticket._id);
+  // Fire-and-forget: the author gets an instant response; triage lands a moment later.
+  runAiTriage(ticket._id);
+
   return ticket.populate('bookId', 'title');
 }
 

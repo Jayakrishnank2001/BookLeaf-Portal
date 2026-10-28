@@ -1,14 +1,19 @@
 const rateLimit = require('express-rate-limit');
 const AppError = require('../utils/AppError');
 
-// Slows down password guessing. Uses the same error shape as the rest of the API.
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res, next) =>
-    next(new AppError('Too many login attempts. Please try again later.', 429, 'RATE_LIMITED')),
-});
+const build = (windowMs, limit, message) =>
+  rateLimit({
+    windowMs,
+    limit,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res, next) => next(new AppError(message, 429, 'RATE_LIMITED')),
+  });
 
-module.exports = { loginLimiter };
+// Slows down password guessing.
+const loginLimiter = build(15 * 60 * 1000, 30, 'Too many login attempts. Please try again later.');
+
+// Protects against ticket spam, which would also drive up AI costs.
+const createTicketLimiter = build(60 * 60 * 1000, 60, 'Too many tickets submitted. Please try again later.');
+
+module.exports = { loginLimiter, createTicketLimiter };

@@ -1,24 +1,24 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { UserRole } from '../models/models';
+
+const homeFor = (role: UserRole) => (role === 'admin' ? '/admin/dashboard' : '/author/dashboard');
 
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (auth.isAuthenticated()) return true;
-  return router.createUrlTree(['/login']);
+  return auth.isAuthenticated() ? true : router.createUrlTree(['/login']);
 };
 
-export const authorGuard: CanActivateFn = () => {
+// Not logged in -> login page. Logged in with the wrong role -> that user's own home.
+const requireRole = (role: UserRole): CanActivateFn => () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (auth.isAuthenticated() && auth.hasRole('author')) return true;
-  return router.createUrlTree(['/login']);
+  const user = auth.currentUser();
+  if (!user) return router.createUrlTree(['/login']);
+  return user.role === role ? true : router.createUrlTree([homeFor(user.role)]);
 };
 
-export const adminGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-  if (auth.isAuthenticated() && auth.hasRole('admin')) return true;
-  return router.createUrlTree(['/login']);
-};
+export const authorGuard = requireRole('author');
+export const adminGuard = requireRole('admin');

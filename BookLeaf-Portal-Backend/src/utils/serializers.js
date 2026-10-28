@@ -44,4 +44,42 @@ const toAuthorTicket = (t) => ({
   updatedAt: t.updatedAt,
 });
 
-module.exports = { toAuthorBook, toAuthorTicket, ticketCode };
+const toAdminTicket = (t) => ({
+  id: t._id,
+  ticketCode: ticketCode(t),
+  subject: t.subject,
+  description: t.description,
+  status: t.status,
+  category: t.category,
+  priority: t.priority,
+  attachments: t.attachments,
+  author: t.authorId
+    ? { id: t.authorId._id, name: t.authorId.name, email: t.authorId.email }
+    : null,
+  book: t.bookId
+    ? { id: t.bookId._id, title: t.bookId.title, bookCode: t.bookId.bookCode, isbn: t.bookId.isbn }
+    : null,
+  assignedTo: t.assignedTo
+    ? { id: t.assignedTo._id, name: t.assignedTo.name, email: t.assignedTo.email, role: t.assignedTo.role }
+    : null,
+  aiMeta: t.aiMeta,
+  draftResponse: t.draftResponse,
+  internalNotes: t.internalNotes.map((n) => ({
+    id: n._id,
+    adminId: n.adminId,
+    adminName: n.adminName,
+    note: n.note,
+    createdAt: n.createdAt,
+  })),
+  responses: t.responses.map((r) => ({
+    id: r._id,
+    adminId: r.adminId,
+    adminName: r.adminName,
+    message: r.message,
+    sentAt: r.sentAt,
+  })),
+  createdAt: t.createdAt,
+  updatedAt: t.updatedAt,
+});
+
+module.exports = { toAuthorBook, toAuthorTicket, toAdminTicket, ticketCode };

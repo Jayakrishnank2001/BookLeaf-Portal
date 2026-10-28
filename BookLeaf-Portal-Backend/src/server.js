@@ -8,8 +8,8 @@ async function start() {
 
   const server = app.listen(env.port, () => {
     logger.info(`API listening on port ${env.port} (${env.nodeEnv})`);
-    if (!env.anthropicApiKey) {
-      logger.warn('ANTHROPIC_API_KEY not set: AI features disabled, manual fallback mode.');
+    if (!env.geminiApiKey) {
+      logger.warn('GEMINI_API_KEY not set: AI features disabled, manual fallback mode.');
     }
   });
 

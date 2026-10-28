@@ -22,8 +22,8 @@ const env = Object.freeze({
 
   // AI key is intentionally optional: without it the AI layer is disabled
   // and the app falls back to manual triage/replies.
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY || null,
-  aiModel: process.env.AI_MODEL || 'claude-haiku-4-5',
+  geminiApiKey: process.env.GEMINI_API_KEY || null,
+  aiModel: process.env.AI_MODEL || 'gemini-3.5-flash',
   aiTimeoutMs: Number(process.env.AI_TIMEOUT_MS) || 10000,
 });
 

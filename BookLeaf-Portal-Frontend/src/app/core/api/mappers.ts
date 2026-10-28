@@ -1,7 +1,7 @@
 // Adapter layer: API payloads -> UI models. Components only ever see UI models,
 // so a change in the wire format is fixed here and nowhere else.
-import { AuthorTicket, Book, BookStatus, TicketMessage, User } from '../models/models';
-import { ApiAuthorTicket, ApiBook, ApiUser } from './api.types';
+import { AuthorTicket, Book, BookStatus, TicketCategory, TicketMessage, Ticket, TicketPriority, TicketStatus, User } from '../models/models';
+import { ApiAuthorTicket, ApiBook, ApiUser, ApiAdminTicket } from './api.types';
 import { hashString } from '../utils/hash';
 
 const AVATAR_COLORS = ['#b0492a', '#2f5d4a', '#0d487f', '#8a5a14', '#6b3f8c', '#0d4f3d'];
@@ -75,5 +75,53 @@ export function toAuthorTicket(api: ApiAuthorTicket, author: { id: string; name:
     createdAt: api.createdAt,
     updatedAt: api.updatedAt,
     messages: [original, ...replies],
+  };
+}
+
+/** Full admin shape: everything visible to BookLeaf support staff. */
+export function toAdminTicket(api: ApiAdminTicket): Ticket {
+  return {
+    id: api.id,
+    ticketCode: api.ticketCode,
+    subject: api.subject,
+    description: api.description,
+    authorId: api.author?.id ?? '',
+    authorName: api.author?.name ?? 'Unknown Author',
+    bookId: api.book?.id ?? null,
+    bookTitle: api.book?.title ?? null,
+    status: api.status as TicketStatus,
+    priority: api.priority as TicketPriority,
+    category: api.category,
+    assignedTo: api.assignedTo?.id ?? null,
+    assignedToName: api.assignedTo?.name ?? null,
+    createdAt: api.createdAt,
+    updatedAt: api.updatedAt,
+    messages: api.responses.map((r) => ({
+      id: r.id,
+      authorId: r.adminId,
+      authorName: r.adminName,
+      authorRole: 'admin' as const,
+      content: r.message,
+      createdAt: r.sentAt,
+    })),
+    internalNotes: api.internalNotes.map((n) => ({
+      id: n.id,
+      authorId: n.adminId,
+      authorName: n.adminName,
+      content: n.note,
+      createdAt: n.createdAt,
+    })),
+    aiClassification: api.aiMeta
+      ? {
+          category: api.aiMeta.category as TicketCategory,
+          categoryConfidence: api.aiMeta.categoryConfidence,
+          categoryReason: api.aiMeta.categoryReason,
+          priority: api.aiMeta.priority as TicketPriority,
+          priorityConfidence: api.aiMeta.priorityConfidence,
+        }
+      : undefined,
+    aiDraft: api.draftResponse
+      ? { content: api.draftResponse, generatedAt: api.updatedAt, source: 'Backend AI' }
+      : undefined,
   };
 }

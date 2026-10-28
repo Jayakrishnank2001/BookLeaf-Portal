@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { AdminTicketService } from '../../../core/services/admin-ticket.service';
+import { AdminTicketService, PaginatedTickets } from '../../../core/services/admin-ticket.service';
 import { Ticket, TicketStatus, TicketPriority } from '../../../core/models/models';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
@@ -22,6 +22,7 @@ export class AdminTicketsComponent implements OnInit {
   private adminSvc = inject(AdminTicketService);
 
   loading = signal(true);
+  error = signal<string | null>(null);
   search = '';
   statusFilter: string | null = null;
   categoryFilter: string | null = null;
@@ -29,7 +30,7 @@ export class AdminTicketsComponent implements OnInit {
   assignedFilter: string | null = null;
   dateFilter: string | null = null;
   sortKey: SortKey = 'priority';
-  sortDir: 'asc' | 'desc' = 'asc';
+  sortDir: 'asc' | 'desc' = 'desc';
 
   private all = signal<Ticket[]>([]);
   filtered = signal<Ticket[]>([]);
@@ -81,7 +82,17 @@ export class AdminTicketsComponent implements OnInit {
     p === 'Critical' ? 'var(--color-critical)' : p === 'High' ? 'var(--color-high)' : p === 'Medium' ? 'var(--color-medium)' : 'var(--color-low)';
 
   ngOnInit() {
-    this.adminSvc.getTickets().subscribe((t) => { this.all.set(t); this.applyFilters(); this.loading.set(false); });
+    this.adminSvc.getTickets({ sort: 'updatedAt', order: 'desc' }).subscribe({
+      next: (result: PaginatedTickets) => {
+        this.all.set(result.tickets);
+        this.applyFilters();
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Unable to load tickets. Please check your connection and try again.');
+        this.loading.set(false);
+      },
+    });
   }
 
   onFilter(value: string | null, key: 'status' | 'category' | 'priority' | 'assigned' | 'date') {

@@ -1,117 +1,210 @@
 <div class="bl-page bl-animate-in">
+  @if (error()) {
+  <div class="bl-card bl-empty">
+    <app-icon name="alert" [size]="30" />
+    <h3>{{ error() }}</h3>
+    <button class="bl-btn bl-btn-primary" (click)="ngOnInit()">Try again</button>
+  </div>
+  } @else if (loading()) {
+  <div class="bl-card bl-empty">
+    <app-icon name="activity" [size]="30" />
+    <h3>Loading ticket...</h3>
+  </div>
+  } @else {
   <header class="bl-page-head">
     <div>
-      <p class="bl-page-eyebrow">Support Operations</p>
-      <h1>Monitor and manage author support requests.</h1>
+      <p class="bl-page-eyebrow">Ticket Workspace</p>
+      <h1>{{ ticket()?.ticketCode }}</h1>
+      <p class="bl-page-sub">{{ ticket()?.subject }}</p>
     </div>
-    <a routerLink="/admin/tickets" class="bl-btn bl-btn-primary">
-      <app-icon name="list" [size]="18" /> Open queue
+    <a routerLink="/admin/tickets" class="bl-btn bl-btn-ghost">
+      <app-icon name="list" [size]="18" /> Back to queue
     </a>
   </header>
 
-  <!-- Metrics -->
-  <section class="bl-metrics">
-    @for (m of metrics(); track m.label) {
-    <div class="bl-card bl-metric bl-hover-lift">
-      <div class="bl-metric-top">
-        <span class="bl-metric-icon" [style.color]="m.accent" [style.background]="m.bg">
-          <app-icon [name]="m.icon" [size]="20" />
-        </span>
-        <span class="bl-metric-value bl-mono-nums">{{ m.value }}</span>
-      </div>
-      <span class="bl-metric-label">{{ m.label }}</span>
-    </div>
-    }
-  </section>
-
   <div class="bl-grid-2">
-    <!-- Activity chart -->
     <section class="bl-card bl-panel">
       <div class="bl-panel-head">
-        <h2><app-icon name="activity" [size]="18" /> Ticket activity</h2>
-        <span class="bl-panel-sub">Last 14 days</span>
+        <h2><app-icon name="ticket" [size]="18" /> Ticket details</h2>
       </div>
-      @if (activityLoading()) {
-      <div class="bl-chart-skel">
-        @for (i of [1,2,3,4,5,6,7,8,9,10]; track i) {
-        <div class="bl-skeleton" style="flex:1; height: 100%; border-radius: 6px;"></div>
-        }
+
+      <div class="bl-detail-row">
+        <span class="bl-detail-label">Status</span>
+        <select class="bl-select" [(ngModel)]="statusSelection" (change)="updateStatus(statusSelection)">
+          @for (opt of statusOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
       </div>
-      } @else {
-      <div class="bl-chart">
-        @for (point of activity(); track point.date) {
-        <div class="bl-chart-bar-wrap" [title]="point.date + ': ' + point.count + ' tickets'">
-          <div class="bl-chart-bar" [style.height.%]="barHeight(point.count)"></div>
-          <span class="bl-chart-val bl-mono-nums">{{ point.count }}</span>
-        </div>
-        }
+
+      <div class="bl-detail-row">
+        <span class="bl-detail-label">Priority</span>
+        <select class="bl-select" [(ngModel)]="prioritySelection" (change)="overrideClassification(undefined, prioritySelection)">
+          @for (opt of priorityOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
       </div>
-      <div class="bl-chart-x">
-        @for (point of xLabels(); track point) {
-        <span>{{ point }}</span>
-        }
+
+      <div class="bl-detail-row">
+        <span class="bl-detail-label">Category</span>
+        <span class="bl-detail-value">{{ ticket()?.category }}</span>
       </div>
-      }
+
+      <div class="bl-detail-row">
+        <span class="bl-detail-label">Author</span>
+        <span class="bl-detail-value">{{ ticket()?.authorName }}</span>
+      </div>
+
+      <div class="bl-detail-row">
+        <span class="bl-detail-label">Book</span>
+        <span class="bl-detail-value">{{ ticket()?.bookTitle || 'General / Account Level' }}</span>
+      </div>
+
+      <div class="bl-detail-row">
+        <span class="bl-detail-label">Assigned to</span>
+        <span class="bl-detail-value">{{ ticket()?.assignedToName || 'Unassigned' }}</span>
+        <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showAssign.set(true)">
+          {{ ticket()?.assignedToName ? 'Change' : 'Assign' }}
+        </button>
+      </div>
+
+      <div class="bl-detail-row">
+        <span class="bl-detail-label">Created</span>
+        <span class="bl-detail-value">{{ ticket()?.createdAt | blDate:'short' }}</span>
+      </div>
+
+      <div class="bl-detail-row">
+        <span class="bl-detail-label">Updated</span>
+        <span class="bl-detail-value">{{ ticket()?.updatedAt | blDate:'short' }}</span>
+      </div>
     </section>
 
-    <!-- Priority breakdown -->
     <section class="bl-card bl-panel">
       <div class="bl-panel-head">
-        <h2><app-icon name="flag" [size]="18" /> Priority breakdown</h2>
-        <span class="bl-panel-sub">Active tickets</span>
+        <h2><app-icon name="note" [size]="18" /> Description</h2>
       </div>
-      @for (p of priorityBreakdown(); track p.label) {
-      <div class="bl-prio-row">
-        <div class="bl-prio-head">
-          <span class="bl-prio-dot" [style.background]="p.color"></span>
-          <span class="bl-prio-label">{{ p.label }}</span>
-          <span class="bl-prio-count bl-mono-nums">{{ p.count }}</span>
-        </div>
-        <div class="bl-prio-bar">
-          <div class="bl-prio-fill" [style.background]="p.color" [style.width.%]="p.pct"></div>
-        </div>
-      </div>
-      }
+      <div class="bl-detail-body">{{ ticket()?.description }}</div>
     </section>
   </div>
 
-  <!-- Recent tickets -->
-  <section class="bl-section">
-    <div class="bl-section-head">
-      <h2>Recent tickets</h2>
-      <a routerLink="/admin/tickets" class="bl-section-link">View all <app-icon name="arrow-right" [size]="14" /></a>
+  <section class="bl-card bl-panel bl-full-width">
+    <div class="bl-panel-head">
+      <h2><app-icon name="message" [size]="18" /> Conversation</h2>
     </div>
-    @if (ticketsLoading()) {
-    <div class="bl-card">
-      @for (i of [1,2,3,4]; track i) {
-      <div class="bl-skel-row">
-        <div class="bl-skeleton" style="height: 14px; width: 110px;"></div>
-        <div class="bl-skeleton" style="height: 14px; width: 50%;"></div>
-        <div class="bl-skeleton" style="height: 22px; width: 80px; border-radius: 999px;"></div>
+
+    <div class="bl-message-list">
+      @for (msg of ticket()?.messages ?? []; track msg.id) {
+      <div class="bl-message bl-message-{{ msg.authorRole }}">
+        <div class="bl-message-header">
+          <span class="bl-message-from">{{ msg.authorName }}</span>
+          <span class="bl-message-time">{{ msg.createdAt | blDate:'short' }}</span>
+        </div>
+        <div class="bl-message-body">{{ msg.content }}</div>
       </div>
       }
     </div>
-    } @else {
-    <div class="bl-card bl-table">
-      <div class="bl-thead">
-        <span>Priority</span><span>Ticket</span><span>Subject</span><span>Author</span><span>Category</span><span>Status</span><span>Updated</span>
+
+    <div class="bl-reply-box">
+      <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showReplyBox.set(true)">
+        <app-icon name="mail" [size]="16" /> Reply to author
+      </button>
+    </div>
+
+    @if (showReplyBox()) {
+    <div class="bl-reply-overlay">
+      <div class="bl-reply-card">
+        <div class="bl-reply-header">
+          <app-icon name="mail" [size]="16" />
+          <span>Send reply to author</span>
+          <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showReplyBox.set(false)"><app-icon name="close" [size]="16" /></button>
+        </div>
+        <textarea class="bl-textarea" [(ngModel)]="replyMessage" placeholder="Type your reply..."></textarea>
+        <div class="bl-reply-actions">
+          <button class="bl-btn bl-btn-ghost" (click)="showReplyBox.set(false)">Cancel</button>
+          <button class="bl-btn bl-btn-primary" [disabled]="!replyMessage.trim()" (click)="sendReply()">Send reply</button>
+        </div>
       </div>
-      @for (t of recentTickets(); track t.id) {
-      <a [routerLink]="['/admin/tickets', t.id]" class="bl-trow bl-hover-lift">
-        <app-badge kind="priority" [value]="t.priority" [dot]="true"
-          [solid]="t.priority === 'Critical' || t.priority === 'High'" />
-        <span class="bl-tcode bl-mono-nums">{{ t.ticketCode }}</span>
-        <span class="bl-tsubj">
-          <span class="bl-tsubj-text">{{ t.subject }}</span>
-          <span class="bl-tbook">{{ t.bookTitle || 'General' }}</span>
-        </span>
-        <span class="bl-tauthor">{{ t.authorName }}</span>
-        <app-badge kind="category" [value]="t.category" />
-        <app-badge kind="status" [value]="t.status" [dot]="true" />
-        <span class="bl-tupdated">{{ t.updatedAt | blTimeAgo }}</span>
-      </a>
-      }
     </div>
     }
   </section>
+
+  <section class="bl-card bl-panel bl-full-width">
+    <div class="bl-panel-head">
+      <h2><app-icon name="note" [size]="18" /> Internal Notes</h2>
+    </div>
+
+    <div class="bl-note-list">
+      @for (note of ticket()?.internalNotes ?? []; track note.id) {
+      <div class="bl-note-item">
+        <div class="bl-note-header">
+          <span class="bl-note-author">{{ note.authorName }}</span>
+          <span class="bl-note-time">{{ note.createdAt | blDate:'short' }}</span>
+        </div>
+        <div class="bl-note-body">{{ note.content }}</div>
+      </div>
+      }
+    </div>
+
+    <div class="bl-note-add">
+      @if (showNoteBox()) {
+      <div class="bl-note-editor">
+        <textarea class="bl-textarea" [(ngModel)]="noteContent" placeholder="Write an internal note (admin-only)..."></textarea>
+        <div class="bl-note-actions">
+          <button class="bl-btn bl-btn-ghost" (click)="showNoteBox.set(false)">Cancel</button>
+          <button class="bl-btn bl-btn-primary" [disabled]="!noteContent.trim()" (click)="addInternalNote()">Add note</button>
+        </div>
+      </div>
+      } @else {
+      <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showNoteBox.set(true)">
+        <app-icon name="plus" [size]="16" /> Add note
+      </button>
+      }
+    </div>
+  </section>
+
+  <section class="bl-card bl-panel bl-full-width">
+    <div class="bl-panel-head">
+      <h2><app-icon name="sparkles" [size]="18" /> AI Draft Response</h2>
+    </div>
+    @if (ticket()?.aiDraft) {
+    <div class="bl-draft-body">{{ ticket()?.aiDraft?.content }}</div>
+    <div class="bl-draft-meta">
+      Generated {{ ticket()?.aiDraft?.generatedAt | blDate:'short' }} via {{ ticket()?.aiDraft?.source }}
+    </div>
+    <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="regenerateDraft()">
+      <app-icon name="refresh" [size]="16" /> Regenerate
+    </button>
+    } @else {
+    <p class="bl-text-muted">No AI draft available yet.</p>
+    <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="regenerateDraft()">
+      <app-icon name="sparkles" [size]="16" /> Generate draft
+    </button>
+    }
+  </section>
+
+  @if (showAssign()) {
+  <div class="bl-overlay">
+    <div class="bl-assign-card">
+      <div class="bl-panel-head">
+        <h3>Assign ticket</h3>
+        <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="showAssign.set(false)"><app-icon name="close" [size]="16" /></button>
+      </div>
+      <p class="bl-text-muted">Enter the admin user ID to assign this ticket:</p>
+      <input class="bl-input" [(ngModel)]="assignAdminId" placeholder="Admin user ID" />
+      <div class="bl-assign-actions">
+        <button class="bl-btn bl-btn-ghost" (click)="showAssign.set(false)">Cancel</button>
+        <button class="bl-btn bl-btn-primary" [disabled]="!assignAdminId.trim()" (click)="assignTicket(assignAdminId.trim())">Assign</button>
+      </div>
+    </div>
+  </div>
+  }
+
+  @if (error()) {
+  <div class="bl-error-toast">
+    <span>{{ error() }}</span>
+    <button class="bl-btn bl-btn-ghost bl-btn-sm" (click)="error.set(null)">&times;</button>
+  </div>
+  }
+  }
 </div>

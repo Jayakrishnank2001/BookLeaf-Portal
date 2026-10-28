@@ -1,124 +1,167 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
-import { Ticket, TicketStatus, TicketPriority, TicketCategory, InternalNote, AIDraft } from '../models/models';
-import { MOCK_TICKETS, ADMIN_USERS, AdminUser } from './mock-data';
-import { RealtimeService } from './realtime.service';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Ticket, TicketStatus, TicketPriority, TicketCategory, InternalNote, AIDraft, TicketActivityPoint } from '../models/models';
+import { ApiAdminTicket, ApiAdminTicketList, ApiAIDraft } from '../api/api.types';
+import { toAdminTicket } from '../api/mappers';
+import { apiErrorMessage } from '../api/api-error';
 
 export interface TicketUpdate {
   status?: TicketStatus;
   priority?: TicketPriority;
   category?: TicketCategory;
   assignedTo?: string | null;
-  assignedToName?: string | null;
 }
 
-export interface TicketActivityPoint {
-  date: string;
-  count: number;
+export interface TicketFilters {
+  status?: TicketStatus | null;
+  category?: TicketCategory | null;
+  priority?: TicketPriority | null;
+  assignedTo?: string | null;
+  sort?: 'createdAt' | 'updatedAt' | 'priority';
+  order?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedTickets {
+  tickets: Ticket[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AdminTicketService {
-  constructor(private realtime: RealtimeService) { }
+  private http = inject(HttpClient);
+  private url = `${environment.apiUrl}/admin/tickets`;
+  getTickets(filters: TicketFilters = {}): Observable<PaginatedTickets> {
+    const params: Record<string, string | number> = {};
+    if (filters.status) params['status'] = filters.status;
+    if (filters.category) params['category'] = filters.category;
+    if (filters.priority) params['priority'] = filters.priority;
+    if (filters.assignedTo) params['assignedTo'] = filters.assignedTo;
+    if (filters.sort) params['sort'] = filters.sort;
+    if (filters.order) params['order'] = filters.order;
+    if (filters.page) params['page'] = filters.page;
+    if (filters.limit) params['limit'] = filters.limit;
 
-  getTickets(): Observable<Ticket[]> {
-    return of([...MOCK_TICKETS].sort((a, b) => this.priorityWeight(a) - this.priorityWeight(b) || +new Date(a.createdAt) - +new Date(b.createdAt))).pipe(delay(550));
+    return this.http
+      .get<ApiAdminTicketList>(this.url, { params })
+      .pipe(
+        map((res) => ({
+          tickets: res.tickets.map((t) => toAdminTicket(t)),
+          total: res.total,
+          page: res.page,
+          limit: res.limit,
+        })),
+        catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Failed to load tickets')))),
+      );
   }
 
   getTicket(id: string): Observable<Ticket | undefined> {
-    return of(MOCK_TICKETS.find((t) => t.id === id)).pipe(delay(350));
+    return this.http
+      .get<{ ticket: ApiAdminTicket }>(`${this.url}/${id}`)
+      .pipe(
+        map((res) => toAdminTicket(res.ticket)),
+        catchError((err) => {
+          if (err.status === 404) return of(undefined);
+          return throwError(() => new Error(apiErrorMessage(err, 'Failed to load ticket')));
+        }),
+      );
   }
 
-  updateTicket(id: string, update: TicketUpdate): Observable<Ticket> {
-    const ticket = MOCK_TICKETS.find((t) => t.id === id)!;
-    if (update.status) ticket.status = update.status;
-    if (update.priority) ticket.priority = update.priority;
-    if (update.category) ticket.category = update.category;
-    if (update.assignedTo !== undefined) {
-      ticket.assignedTo = update.assignedTo;
-      ticket.assignedToName = update.assignedTo ? (ADMIN_USERS.find((a: AdminUser) => a.id === update.assignedTo)?.name ?? null) : null;
-    }
-    ticket.updatedAt = new Date().toISOString();
-    this.realtime.emit('ticket:status-changed', ticket);
-    return of(ticket).pipe(delay(450));
+  updateStatus(id: string, status: TicketStatus): Observable<Ticket> {
+    return this.http
+      .patch<{ ticket: ApiAdminTicket }>(`${this.url}/${id}/status`, { status })
+      .pipe(
+        map((res) => toAdminTicket(res.ticket)),
+        catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Failed to update status')))),
+      );
   }
 
-  addInternalNote(ticketId: string, authorId: string, authorName: string, content: string): Observable<InternalNote> {
-    const ticket = MOCK_TICKETS.find((t) => t.id === ticketId)!;
-    const note: InternalNote = { id: 'n-' + Date.now(), authorId, authorName, content, createdAt: new Date().toISOString() };
-    ticket.internalNotes.push(note);
-    ticket.updatedAt = new Date().toISOString();
-    return of(note).pipe(delay(350));
+  overrideClassification(id: string, update: { category?: TicketCategory; priority?: TicketPriority }): Observable<Ticket> {
+    return this.http
+      .patch<{ ticket: ApiAdminTicket }>(`${this.url}/${id}/classification`, update)
+      .pipe(
+        map((res) => toAdminTicket(res.ticket)),
+        catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Failed to update classification')))),
+      );
   }
 
-  saveAIDraft(ticketId: string, content: string): Observable<Ticket> {
-    const ticket = MOCK_TICKETS.find((t) => t.id === ticketId)!;
-    ticket.aiDraft = { content, generatedAt: new Date().toISOString(), source: 'Backend AI' };
-    return of(ticket).pipe(delay(300));
+  assignTicket(id: string, adminId: string): Observable<Ticket> {
+    return this.http
+      .patch<{ ticket: ApiAdminTicket }>(`${this.url}/${id}/assign`, { adminId })
+      .pipe(
+        map((res) => toAdminTicket(res.ticket)),
+        catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Failed to assign ticket')))),
+      );
   }
 
-  generateDraft(ticketId: string): Observable<AIDraft> {
-    const draft: AIDraft = {
-      content: '',
-      generatedAt: new Date().toISOString(),
-      source: 'Backend AI',
+  addInternalNote(ticketId: string, note: string): Observable<InternalNote> {
+    return this.http
+      .post<{ ticket: ApiAdminTicket }>(`${this.url}/${ticketId}/notes`, { note })
+      .pipe(
+        map((res) => {
+          const ticket = toAdminTicket(res.ticket);
+          const lastNote = ticket.internalNotes[ticket.internalNotes.length - 1];
+          return lastNote ?? { id: '', authorId: '', authorName: '', content: note, createdAt: new Date().toISOString() };
+        }),
+        catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Failed to add note')))),
+      );
+  }
+
+  getAIDraft(ticketId: string, regenerate = false): Observable<AIDraft> {
+    return this.http
+      .get<{ draft: ApiAIDraft }>(`${this.url}/${ticketId}/draft`, {
+        params: { regenerate: String(regenerate) },
+      })
+      .pipe(
+        map((res) => res.draft),
+        catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Failed to load AI draft')))),
+      );
+  }
+
+  sendReply(ticketId: string, message: string): Observable<Ticket> {
+    return this.http
+      .post<{ ticket: ApiAdminTicket }>(`${this.url}/${ticketId}/reply`, { message })
+      .pipe(
+        map((res) => toAdminTicket(res.ticket)),
+        catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Failed to send reply')))),
+      );
+  }
+
+  getMetrics(tickets: Ticket[]) {
+    const today = new Date().toISOString().slice(0, 10);
+    return {
+      open: tickets.filter((t) => t.status === 'Open').length,
+      inProgress: tickets.filter((t) => t.status === 'In Progress').length,
+      resolved: tickets.filter((t) => t.status === 'Resolved').length,
+      closed: tickets.filter((t) => t.status === 'Closed').length,
+      critical: tickets.filter((t) => t.priority === 'Critical' && t.status !== 'Closed').length,
+      high: tickets.filter((t) => t.priority === 'High' && t.status !== 'Closed').length,
+      unassigned: tickets.filter((t) => !t.assignedTo && t.status !== 'Closed' && t.status !== 'Resolved').length,
+      resolvedToday: tickets.filter(
+        (t) => t.status === 'Resolved' && t.updatedAt.slice(0, 10) === today,
+      ).length,
     };
-    const ticket = MOCK_TICKETS.find((t) => t.id === ticketId);
-    if (ticket) ticket.aiDraft = draft;
-    return of(draft).pipe(delay(1100));
   }
 
-  sendResponse(ticketId: string, content: string, authorId: string, authorName: string): Observable<Ticket> {
-    const ticket = MOCK_TICKETS.find((t) => t.id === ticketId)!;
-    ticket.messages.push({
-      id: 'm-' + Date.now(),
-      authorId, authorName, authorRole: 'admin', content,
-      createdAt: new Date().toISOString(),
-    });
-    if (ticket.status === 'Open') ticket.status = 'In Progress';
-    ticket.updatedAt = new Date().toISOString();
-    this.realtime.emit('ticket:message', ticket);
-    return of(ticket).pipe(delay(500));
-  }
-
-  getActivity(): Observable<TicketActivityPoint[]> {
-    const all = MOCK_TICKETS;
-    if (all.length === 0) {
-      return of([]).pipe(delay(400));
-    }
+  getActivity(tickets: Ticket[]): TicketActivityPoint[] {
     const today = new Date();
     const days = Array.from({ length: 14 }, (_, i) => {
       const d = new Date(today);
       d.setDate(today.getDate() - (13 - i));
-      return d;
+      return d.toISOString().slice(0, 10);
     });
     const dayMap = new Map<string, number>();
-    days.forEach((d) => dayMap.set(d.toISOString().slice(0, 10), 0));
-    all.forEach((t) => {
-      const d = new Date(t.createdAt).toISOString().slice(0, 10);
+    days.forEach((d) => dayMap.set(d, 0));
+    tickets.forEach((t) => {
+      const d = t.createdAt.slice(0, 10);
       if (dayMap.has(d)) dayMap.set(d, (dayMap.get(d) ?? 0) + 1);
     });
-    return of(days.map((d) => ({ date: d.toISOString().slice(0, 10), count: dayMap.get(d.toISOString().slice(0, 10)) ?? 0 }))).pipe(delay(400));
-  }
-
-  getMetrics() {
-    const all = MOCK_TICKETS;
-    const today = new Date();
-    return {
-      open: all.filter((t) => t.status === 'Open').length,
-      inProgress: all.filter((t) => t.status === 'In Progress').length,
-      resolved: all.filter((t) => t.status === 'Resolved').length,
-      closed: all.filter((t) => t.status === 'Closed').length,
-      critical: all.filter((t) => t.priority === 'Critical' && t.status !== 'Closed').length,
-      high: all.filter((t) => t.priority === 'High' && t.status !== 'Closed').length,
-      unassigned: all.filter((t) => !t.assignedTo && t.status !== 'Closed' && t.status !== 'Resolved').length,
-      resolvedToday: all.filter((t) => t.status === 'Resolved' && new Date(t.updatedAt).toISOString().slice(0, 10) === today.toISOString().slice(0, 10)).length,
-    };
-  }
-
-  getAdminUsers() {
-    return ADMIN_USERS;
+    return days.map((d) => ({ date: d, count: dayMap.get(d) ?? 0 }));
   }
 
   priorityWeight(t: Ticket): number {

@@ -25,35 +25,6 @@
   </section>
 
   <div class="bl-grid-2">
-    <!-- Activity chart -->
-    <section class="bl-card bl-panel">
-      <div class="bl-panel-head">
-        <h2><app-icon name="activity" [size]="18" /> Ticket activity</h2>
-        <span class="bl-panel-sub">Last 14 days</span>
-      </div>
-      @if (activityLoading()) {
-      <div class="bl-chart-skel">
-        @for (i of [1,2,3,4,5,6,7,8,9,10]; track i) {
-        <div class="bl-skeleton" style="flex:1; height: 100%; border-radius: 6px;"></div>
-        }
-      </div>
-      } @else {
-      <div class="bl-chart">
-        @for (point of activity(); track point.date) {
-        <div class="bl-chart-bar-wrap" [title]="point.date + ': ' + point.count + ' tickets'">
-          <div class="bl-chart-bar" [style.height.%]="barHeight(point.count)"></div>
-          <span class="bl-chart-val bl-mono-nums">{{ point.count }}</span>
-        </div>
-        }
-      </div>
-      <div class="bl-chart-x">
-        @for (point of xLabels(); track point) {
-        <span>{{ point }}</span>
-        }
-      </div>
-      }
-    </section>
-
     <!-- Priority breakdown -->
     <section class="bl-card bl-panel">
       <div class="bl-panel-head">

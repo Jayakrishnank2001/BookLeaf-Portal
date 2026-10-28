@@ -1,71 +1,161 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { AdminTicketService, TicketActivityPoint } from '../../../core/services/admin-ticket.service';
-import { Ticket } from '../../../core/models/models';
+import { RouterLink, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AdminTicketService } from '../../../core/services/admin-ticket.service';
+import { Ticket, TicketStatus, TicketPriority, TicketCategory } from '../../../core/models/models';
 import { IconComponent, IconName } from '../../../shared/components/icon/icon.component';
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { DatePipe } from '../../../shared/pipes/date.pipe';
 
-interface Metric {
+export interface TicketFilterBadge {
   label: string;
-  value: number;
-  icon: IconName;
-  accent: string;
-  bg: string;
+  value: string;
 }
 
 @Component({
   selector: 'app-admin-ticket-detail',
   standalone: true,
-  imports: [RouterLink, IconComponent, BadgeComponent, TimeAgoPipe],
+  imports: [RouterLink, FormsModule, IconComponent, BadgeComponent, TimeAgoPipe, DatePipe],
   templateUrl: './admin-ticket-detail.component.html',
   styleUrls: ['./admin-ticket-detail.component.css'],
 })
 export class AdminTicketDetailComponent implements OnInit {
+  private route = inject(ActivatedRoute);
   private adminSvc = inject(AdminTicketService);
 
-  activityLoading = signal(true);
-  ticketsLoading = signal(true);
-  activity = signal<TicketActivityPoint[]>([]);
-  recentTickets = signal<Ticket[]>([]);
-  maxActivity = computed(() => Math.max(...this.activity().map((p) => p.count), 1));
+  ticket = signal<Ticket | null>(null);
+  loading = signal(true);
+  error = signal<string | null>(null);
+  statusSelection: TicketStatus = 'Open';
+  prioritySelection: TicketPriority = 'Medium';
 
-  metrics = computed<Metric[]>(() => {
-    const m = this.adminSvc.getMetrics();
-    return [
-      { label: 'Open tickets', value: m.open, icon: 'ticket', accent: 'var(--color-info)', bg: 'var(--color-info-50)' },
-      { label: 'Critical', value: m.critical, icon: 'alert', accent: 'var(--color-critical)', bg: 'var(--color-critical-50)' },
-      { label: 'High priority', value: m.high, icon: 'flag', accent: 'var(--color-high)', bg: 'var(--color-high-50)' },
-      { label: 'Unassigned', value: m.unassigned, icon: 'users', accent: 'var(--color-warning)', bg: 'var(--color-warning-50)' },
-      { label: 'Resolved today', value: m.resolvedToday, icon: 'check', accent: 'var(--color-success)', bg: 'var(--color-success-50)' },
-    ];
-  });
+  // Modals / overlays
+  showReplyBox = signal(false);
+  showNoteBox = signal(false);
+  showAssign = signal(false);
+  showDraft = signal(false);
 
-  priorityBreakdown = computed(() => {
-    const m = this.adminSvc.getMetrics();
-    const all = m.open + m.inProgress + m.critical + m.high;
-    const total = Math.max(all, 1);
-    return [
-      { label: 'Critical', count: m.critical, color: 'var(--color-critical)', pct: (m.critical / total) * 100 },
-      { label: 'High', count: m.high, color: 'var(--color-high)', pct: (m.high / total) * 100 },
+  // Forms
+  replyMessage = '';
+  noteContent = '';
+  assignAdminId = '';
 
-    ];
-  });
-
-  xLabels = computed(() => {
-    const a = this.activity();
-    return a.filter((_, i) => i % 2 === 0).map((p) => new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }));
-  });
-
-  barHeight(count: number): number {
-    return Math.max(6, Math.round((count / this.maxActivity()) * 100));
-  }
+  statusOptions: TicketFilterBadge[] = [
+    { label: 'Open', value: 'Open' },
+    { label: 'In Progress', value: 'In Progress' },
+    { label: 'Resolved', value: 'Resolved' },
+    { label: 'Closed', value: 'Closed' },
+  ];
+  priorityOptions: TicketFilterBadge[] = [
+    { label: 'Critical', value: 'Critical' },
+    { label: 'High', value: 'High' },
+    { label: 'Medium', value: 'Medium' },
+    { label: 'Low', value: 'Low' },
+  ];
 
   ngOnInit() {
-    this.adminSvc.getActivity().subscribe((a) => { this.activity.set(a); this.activityLoading.set(false); });
-    this.adminSvc.getTickets().subscribe((t) => {
-      this.recentTickets.set(t.slice(0, 5));
-      this.ticketsLoading.set(false);
+    const ticketId = this.route.snapshot.paramMap.get('id');
+    if (!ticketId) {
+      this.error.set('No ticket ID provided.');
+      this.loading.set(false);
+      return;
+    }
+
+    this.adminSvc.getTicket(ticketId).subscribe({
+      next: (t) => {
+        if (!t) {
+          this.error.set('Ticket not found.');
+        } else {
+          this.ticket.set(t);
+          this.statusSelection = t.status;
+          this.prioritySelection = t.priority;
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Unable to load ticket. Please check your connection.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  isUrgent(p: TicketPriority): boolean {
+    return p === 'Critical' || p === 'High';
+  }
+
+  statusColor(s: TicketStatus): string {
+    return s === 'Resolved' ? 'var(--color-success)' : s === 'Closed' ? 'var(--color-neutral)' : s === 'In Progress' ? 'var(--color-info)' : 'var(--color-warning)';
+  }
+
+  priorityColor(p: TicketPriority): string {
+    return p === 'Critical' ? 'var(--color-critical)' : p === 'High' ? 'var(--color-high)' : p === 'Medium' ? 'var(--color-medium)' : 'var(--color-low)';
+  }
+
+  // ---- Actions ----
+
+  updateStatus(status: TicketStatus) {
+    const t = this.ticket();
+    if (!t) return;
+    this.adminSvc.updateStatus(t.id, status).subscribe({
+      next: (updated) => this.ticket.set(updated),
+      error: () => this.error.set('Failed to update status.'),
+    });
+  }
+
+  overrideClassification(category?: TicketCategory, priority?: TicketPriority) {
+    const t = this.ticket();
+    if (!t) return;
+    this.adminSvc.overrideClassification(t.id, { category, priority }).subscribe({
+      next: (updated) => { this.ticket.set(updated); this.showAssign.set(false); },
+      error: () => this.error.set('Failed to update classification.'),
+    });
+  }
+
+  assignTicket(adminId: string) {
+    const t = this.ticket();
+    if (!t) return;
+    this.adminSvc.assignTicket(t.id, adminId).subscribe({
+      next: (updated) => { this.ticket.set(updated); this.showAssign.set(false); },
+      error: () => this.error.set('Failed to assign ticket.'),
+    });
+  }
+
+  addInternalNote() {
+    const t = this.ticket();
+    if (!t || !this.noteContent.trim()) return;
+    this.adminSvc.addInternalNote(t.id, this.noteContent.trim()).subscribe({
+      next: () => {
+        this.adminSvc.getTicket(t.id).subscribe({
+          next: (updated) => { if (updated) this.ticket.set(updated); },
+        });
+        this.noteContent = '';
+        this.showNoteBox.set(false);
+      },
+      error: () => this.error.set('Failed to add note.'),
+    });
+  }
+
+  regenerateDraft() {
+    const t = this.ticket();
+    if (!t) return;
+    this.adminSvc.getAIDraft(t.id, true).subscribe({
+      next: (draft) => {
+        this.adminSvc.getTicket(t.id).subscribe({
+          next: (updated) => { if (updated) this.ticket.set(updated); },
+        });
+        this.showDraft.set(false);
+      },
+      error: () => this.error.set('Failed to regenerate draft.'),
+    });
+  }
+
+  sendReply() {
+    const t = this.ticket();
+    if (!t || !this.replyMessage.trim()) return;
+    this.adminSvc.sendReply(t.id, this.replyMessage.trim()).subscribe({
+      next: (updated) => { this.ticket.set(updated); this.replyMessage = ''; this.showReplyBox.set(false); },
+      error: () => this.error.set('Failed to send reply.'),
     });
   }
 }

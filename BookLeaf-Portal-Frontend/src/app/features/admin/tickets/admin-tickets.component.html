@@ -40,7 +40,14 @@
     </div>
   </div>
 
-  @if (loading()) {
+  @if (error()) {
+  <div class="bl-card bl-empty">
+    <app-icon name="alert" [size]="30" />
+    <h3>Unable to load tickets</h3>
+    <p>{{ error() }}</p>
+    <button class="bl-btn bl-btn-primary" (click)="ngOnInit()">Try again</button>
+  </div>
+  } @else if (loading()) {
   <div class="bl-card">
     <div class="bl-thead">
       <span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span>

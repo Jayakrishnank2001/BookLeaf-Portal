@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AdminTicketService, TicketActivityPoint } from '../../../core/services/admin-ticket.service';
+import { AdminTicketService } from '../../../core/services/admin-ticket.service';
 import { Ticket } from '../../../core/models/models';
 import { IconComponent, IconName } from '../../../shared/components/icon/icon.component';
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
@@ -24,14 +24,15 @@ interface Metric {
 export class AdminDashboardComponent implements OnInit {
   private adminSvc = inject(AdminTicketService);
 
+  loading = signal(true);
   activityLoading = signal(true);
   ticketsLoading = signal(true);
-  activity = signal<TicketActivityPoint[]>([]);
+  activity = signal<Ticket[]>([]);
   recentTickets = signal<Ticket[]>([]);
-  maxActivity = computed(() => Math.max(...this.activity().map((p) => p.count), 1));
+  maxActivity = computed(() => Math.max(...this.activity().map((t) => +new Date(t.updatedAt)), 1));
 
   metrics = computed<Metric[]>(() => {
-    const m = this.adminSvc.getMetrics();
+    const m = this.adminSvc.getMetrics(this.activity());
     return [
       { label: 'Open tickets', value: m.open, icon: 'ticket', accent: 'var(--color-info)', bg: 'var(--color-info-50)' },
       { label: 'Critical', value: m.critical, icon: 'alert', accent: 'var(--color-critical)', bg: 'var(--color-critical-50)' },
@@ -42,7 +43,7 @@ export class AdminDashboardComponent implements OnInit {
   });
 
   priorityBreakdown = computed(() => {
-    const m = this.adminSvc.getMetrics();
+    const m = this.adminSvc.getMetrics(this.activity());
     const all = m.open + m.inProgress + m.critical + m.high;
     const total = Math.max(all, 1);
     return [
@@ -52,20 +53,17 @@ export class AdminDashboardComponent implements OnInit {
     ];
   });
 
-  xLabels = computed(() => {
-    const a = this.activity();
-    return a.filter((_, i) => i % 2 === 0).map((p) => new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }));
-  });
-
-  barHeight(count: number): number {
-    return Math.max(6, Math.round((count / this.maxActivity()) * 100));
-  }
-
   ngOnInit() {
-    this.adminSvc.getActivity().subscribe((a) => { this.activity.set(a); this.activityLoading.set(false); });
-    this.adminSvc.getTickets().subscribe((t) => {
-      this.recentTickets.set(t.slice(0, 5));
-      this.ticketsLoading.set(false);
+    this.adminSvc.getTickets().subscribe({
+      next: (result) => {
+        this.activity.set(result.tickets);
+        this.recentTickets.set(result.tickets.slice(0, 5));
+        this.ticketsLoading.set(false);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      },
     });
   }
 }

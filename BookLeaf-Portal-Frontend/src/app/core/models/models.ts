@@ -118,6 +118,11 @@ export type AuthorTicket = Omit<
   'priority' | 'assignedTo' | 'assignedToName' | 'internalNotes' | 'aiClassification' | 'aiDraft'
 >;
 
+export interface TicketActivityPoint {
+  date: string;
+  count: number;
+}
+
 export interface Notification {
   id: string;
   title: string;

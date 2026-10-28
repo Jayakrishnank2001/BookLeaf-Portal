@@ -28,9 +28,8 @@ export interface Author {
 
 export interface Book {
   id: string;
+  bookCode: string;
   title: string;
-  authorId: string;
-  authorName: string;
   genre: string;
   isbn: string | null;
   status: BookStatus;
@@ -42,11 +41,7 @@ export interface Book {
   royaltyPending: number;
   printPartner: string | null;
   platforms: string[];
-  coverAccent: string;
-  coverSeed: string;
   lastPayoutDate: string | null;
-  lastPayoutAmount: number | null;
-  blurb?: string;
 }
 
 export type TicketStatus = 'Open' | 'In Progress' | 'Resolved' | 'Closed';
@@ -112,6 +107,16 @@ export interface Ticket {
   aiClassification?: AIClassification;
   aiDraft?: AIDraft;
 }
+
+/**
+ * A ticket as an author sees it. Priority, internal notes, AI data and assignment
+ * are internal to the BookLeaf team, so the API never sends them to authors
+ * and the type makes it impossible to render them by accident.
+ */
+export type AuthorTicket = Omit<
+  Ticket,
+  'priority' | 'assignedTo' | 'assignedToName' | 'internalNotes' | 'aiClassification' | 'aiDraft'
+>;
 
 export interface Notification {
   id: string;

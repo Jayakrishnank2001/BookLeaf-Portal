@@ -1,68 +1,76 @@
-import { Injectable } from '@angular/core';
-import { signal, computed } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { delay, map, catchError } from 'rxjs/operators';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { User } from '../models/models';
-import { HttpErrorResponse } from '@angular/common/http';
-import { throwError } from 'rxjs';
-
-const API_BASE = 'http://localhost:5000';
-
-const STORAGE_KEY = 'bookleaf-auth';
+import { Observable, catchError, map, throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { User, UserRole } from '../models/models';
+import { ApiLoginResponse } from '../api/api.types';
+import { apiErrorMessage } from '../api/api-error';
+import { toUser } from '../api/mappers';
 
 const TOKEN_KEY = 'bookleaf_token';
+const USER_KEY = 'bookleaf_user';
 
-interface LoginResponse {
-  token: string;
-  user: User;
+/** Reads the `exp` claim so an expired token is never treated as a logged-in session. */
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp !== 'number' || payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private currentUserSubject = new BehaviorSubject<User | null>(this.restore());
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) { }
-
-  currentUser = signal<User | null>(this.restore());
+  currentUser = signal<User | null>(this.restoreSession());
   isAuthenticated = computed(() => this.currentUser() !== null);
 
-  private restore(): User | null {
+  private restoreSession(): User | null {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as User) : null;
+      const token = localStorage.getItem(TOKEN_KEY);
+      const raw = localStorage.getItem(USER_KEY);
+      if (!token || !raw || isTokenExpired(token)) {
+        this.clearStorage();
+        return null;
+      }
+      return JSON.parse(raw) as User;
     } catch {
       return null;
     }
   }
 
+  private clearStorage(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
   login(email: string, password: string): Observable<User> {
     return this.http
-      .post<LoginResponse>(`${API_BASE}/api/v1/auth/login`, { email, password })
+      .post<ApiLoginResponse>(`${environment.apiUrl}/auth/login`, { email, password })
       .pipe(
         map(({ token, user }) => {
-          localStorage.setItem(TOKEN_KEY, token);                 // needed for later API calls
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-          this.currentUser.set(user);
-          return user;
+          const mapped = toUser(user);
+          localStorage.setItem(TOKEN_KEY, token);
+          localStorage.setItem(USER_KEY, JSON.stringify(mapped));
+          this.currentUser.set(mapped);
+          return mapped;
         }),
-        catchError((err: HttpErrorResponse) => {
-          // Backend errors look like { error: { code, message } }
-          const message =
-            err.status === 0
-              ? 'Cannot reach the server. Please try again.'
-              : err.error?.error?.message || 'Login failed';
-          return throwError(() => new Error(message));
-        })
+        catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Login failed')))),
       );
   }
 
   logout(): void {
-    localStorage.removeItem(STORAGE_KEY);
+    this.clearStorage();
     this.currentUser.set(null);
   }
 
-  hasRole(role: 'author' | 'admin'): boolean {
+  hasRole(role: UserRole): boolean {
     return this.currentUser()?.role === role;
   }
 }

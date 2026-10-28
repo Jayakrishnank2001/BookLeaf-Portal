@@ -1,10 +1,12 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TicketService } from '../../../../core/services/ticket.service';
-import { AuthService } from '../../../../core/services/auth.service';
-import { Ticket, TicketStatus, TicketPriority, TicketCategory } from '../../../../core/models/models';
-import { IconComponent, IconName } from '../../../../shared/components/icon/icon.component';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { apiErrorMessage } from '../../../../core/api/api-error';
+import { AuthorTicket } from '../../../../core/models/models';
+import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { BadgeComponent } from '../../../../shared/components/badge/badge.component';
 import { SelectComponent, DropdownOption } from '../../../../shared/components/select/select.component';
 import { DatePipe } from '../../../../shared/pipes/date.pipe';
@@ -19,17 +21,17 @@ import { TimeAgoPipe } from '../../../../shared/pipes/time-ago.pipe';
 })
 export class AuthorTicketsComponent implements OnInit {
   private ticketSvc = inject(TicketService);
-  private auth = inject(AuthService);
+  private notify = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   loading = signal(true);
   search = '';
   statusFilter: string | null = null;
-  priorityFilter: string | null = null;
   categoryFilter: string | null = null;
   dateFilter: string | null = null;
 
-  private tickets = signal<Ticket[]>([]);
-  filtered = signal<Ticket[]>([]);
+  private tickets = signal<AuthorTicket[]>([]);
+  filtered = signal<AuthorTicket[]>([]);
 
   statusOptions: DropdownOption[] = [
     { value: '', label: 'All statuses' },
@@ -37,13 +39,6 @@ export class AuthorTicketsComponent implements OnInit {
     { value: 'In Progress', label: 'In Progress' },
     { value: 'Resolved', label: 'Resolved' },
     { value: 'Closed', label: 'Closed' },
-  ];
-  priorityOptions: DropdownOption[] = [
-    { value: '', label: 'All priorities' },
-    { value: 'Critical', label: 'Critical' },
-    { value: 'High', label: 'High' },
-    { value: 'Medium', label: 'Medium' },
-    { value: 'Low', label: 'Low' },
   ];
   categoryOptions: DropdownOption[] = [
     { value: '', label: 'All categories' },
@@ -61,29 +56,38 @@ export class AuthorTicketsComponent implements OnInit {
     { value: '90', label: 'Last 90 days' },
   ];
 
-  isUrgent = (p: TicketPriority) => p === 'Critical' || p === 'High';
-
-  onFilter(value: string | null, key: 'status' | 'priority' | 'category' | 'date') {
+  onFilter(value: string | null, key: 'status' | 'category' | 'date') {
     const v = value || null;
     if (key === 'status') this.statusFilter = v;
-    else if (key === 'priority') this.priorityFilter = v;
     else if (key === 'category') this.categoryFilter = v;
     else this.dateFilter = v;
     this.applyFilters();
   }
 
   ngOnInit() {
-    const authorId = this.auth.currentUser()?.id ?? '';
-    this.ticketSvc.getTickets(authorId).subscribe((t) => { this.tickets.set(t); this.applyFilters(); this.loading.set(false); });
+    // Polled: when the team replies or changes a status, the list updates on its own.
+    this.ticketSvc
+      .watchTickets()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (tickets) => {
+          this.tickets.set(tickets);
+          this.applyFilters(); // keeps the author's filters and search across refreshes
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.notify.error(apiErrorMessage(err));
+        },
+      });
   }
 
   applyFilters() {
     const q = this.search.trim().toLowerCase();
     const now = Date.now();
-    let list = this.tickets().filter((t) => {
+    const list = this.tickets().filter((t) => {
       if (q && !`${t.ticketCode} ${t.subject} ${t.bookTitle ?? ''}`.toLowerCase().includes(q)) return false;
       if (this.statusFilter && t.status !== this.statusFilter) return false;
-      if (this.priorityFilter && t.priority !== this.priorityFilter) return false;
       if (this.categoryFilter && t.category !== this.categoryFilter) return false;
       if (this.dateFilter) {
         const days = parseInt(this.dateFilter, 10);
@@ -91,7 +95,6 @@ export class AuthorTicketsComponent implements OnInit {
       }
       return true;
     });
-    list = [...list].sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
-    this.filtered.set(list);
+    this.filtered.set([...list].sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)));
   }
 }

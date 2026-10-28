@@ -9,7 +9,7 @@
     </header> <!-- Toolbar -->
     <div class="bl-card bl-toolbar">
         <div class="bl-search-wrap"> <app-icon class="bl-search-icon" name="search" [size]="18" /> <input
-                class="bl-input bl-search-input" type="search" placeholder="Search by title, ISBN, or genre\u2026"
+                class="bl-input bl-search-input" type="search" placeholder="Search by title, ISBN, or genre"
                 [(ngModel)]="search" (ngModelChange)="applyFilters()" aria-label="Search books" /> </div>
         <div class="bl-toolbar-filters"> <app-select [value]="genreFilter" [options]="genreOptions"
                 placeholder="All genres" (valueChange)="onFilterChange($event, 'genre')" /> <app-select
@@ -30,7 +30,7 @@
             (click)="clearFilters()">Clear filters</button>
     </div> } @else { <div class="bl-grid"> @for (book of filtered(); track book.id) { <a
             [routerLink]="['/author/books', book.id]" class="bl-card bl-book-tile bl-hover-lift">
-            <div class="bl-tile-cover"> <app-badge [title]="book.title" /> <app-badge kind="book-status"
+            <div class="bl-tile-cover"> <app-book-cover [title]="book.title" /> <app-badge kind="book-status"
                     [value]="book.status" [dot]="true" /> </div>
             <div class="bl-tile-body">
                 <h3 class="bl-tile-title">{{ book.title }}</h3> <span class="bl-tile-genre">{{ book.genre }}</span>

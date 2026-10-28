@@ -174,7 +174,7 @@
 
 .bl-ticket-grid-head {
     display: grid;
-    grid-template-columns: 130px 1fr 150px 90px 110px 90px;
+    grid-template-columns: 130px 1fr 150px 110px 90px;
     gap: 14px;
     padding: 10px 14px;
     font-size: 0.72rem;
@@ -187,7 +187,7 @@
 
 .bl-ticket-row {
     display: grid;
-    grid-template-columns: 130px 1fr 150px 90px 110px 90px;
+    grid-template-columns: 130px 1fr 150px 110px 90px;
     gap: 14px;
     padding: 14px;
     align-items: center;

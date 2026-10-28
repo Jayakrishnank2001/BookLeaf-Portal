@@ -2,7 +2,7 @@
     <header class="bl-page-head">
         <div>
             <p class="bl-page-eyebrow">Author Dashboard</p>
-            <h1>Good morning, {{ firstName }}</h1>
+            <h1>{{ greeting }}, {{ firstName }}</h1>
             <p class="bl-page-sub">Here's an overview of your books and support requests.</p>
         </div> <a routerLink="/author/tickets/new" class="bl-btn bl-btn-primary"> <app-icon name="plus" [size]="18" />
             Submit a query </a>
@@ -26,8 +26,7 @@
                 <div class="bl-skeleton" style="height: 13px; width: 90%; margin-top: 16px;"></div>
                 <div class="bl-skeleton" style="height: 13px; width: 60%; margin-top: 6px;"></div>
             </div> } </div> } @else { <div class="bl-book-grid"> @for (book of recentBooks(); track book.id) { <a
-                [routerLink]="['/author/books', book.id]" class="bl-card bl-book-card bl-hover-lift"> <app-badge
-                    [title]="book.title" />
+                [routerLink]="['/author/books', book.id]" class="bl-card bl-book-card bl-hover-lift"> <app-book-cover [title]="book.title" />
                 <div class="bl-book-body">
                     <div class="bl-book-title-row">
                         <h3 class="bl-book-title">{{ book.title }}</h3> <app-badge kind="book-status"
@@ -63,13 +62,12 @@
             <p>When you raise a query it will appear here.</p>
         </div> } @else { <div class="bl-card bl-ticket-list">
             <div class="bl-ticket-grid-head">
-                <span>Ticket</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>Updated</span>
+                <span>Ticket</span><span>Subject</span><span>Category</span><span>Status</span><span>Updated</span>
             </div> @for (t of recentTickets(); track t.id) { <a [routerLink]="['/author/tickets', t.id]"
                 class="bl-ticket-row bl-hover-lift"> <span class="bl-ticket-code bl-mono-nums">{{ t.ticketCode }}</span>
                 <span class="bl-ticket-subject"> <span class="bl-ticket-subject-text">{{ t.subject }}</span> <span
                         class="bl-ticket-book">{{ t.bookTitle || 'General' }}</span> </span> <app-badge kind="category"
-                    [value]="t.category" /> <app-badge kind="priority" [value]="t.priority" [dot]="true"
-                    [solid]="t.priority === 'Critical' || t.priority === 'High'" /> <app-badge kind="status"
+                    [value]="t.category" /> <app-badge kind="status"
                     [value]="t.status" [dot]="true" /> <span class="bl-ticket-updated">{{ t.updatedAt | blTimeAgo
                     }}</span> </a> }
         </div> }

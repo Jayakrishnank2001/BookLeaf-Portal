@@ -16,10 +16,9 @@
             class="bl-btn bl-btn-ghost">Back to books</a>
     </div> } @else { <div class="bl-detail-grid"> <!-- Left column -->
         <aside class="bl-card bl-detail-left">
-            <div class="bl-detail-cover"> <app-badge [title]="book()!.title" /> </div> <app-badge kind="book-status"
+            <div class="bl-detail-cover"> <app-book-cover [title]="book()!.title" ratio="3 / 4.2" /> </div> <app-badge kind="book-status"
                 [value]="book()!.status" [dot]="true" />
             <h1 class="bl-detail-title">{{ book()!.title }}</h1>
-            <p class="bl-detail-blurb">{{ book()!.blurb }}</p>
             <dl class="bl-detail-facts">
                 <div class="bl-fact">
                     <dt>Genre</dt>
@@ -74,8 +73,8 @@
                     <div class="bl-stat-box"> <span class="bl-stat-label">Copies sold</span> <span
                             class="bl-stat-value bl-mono-nums">{{ book()!.copiesSold | number }}</span> </div>
                     <div class="bl-stat-box"> <span class="bl-stat-label">Last payout</span> <span
-                            class="bl-stat-value bl-mono-nums">{{ book()!.lastPayoutAmount | blMoney }}</span> <span
-                            class="bl-stat-sub">{{ book()!.lastPayoutDate | blDate }}</span> </div>
+                            class="bl-stat-value bl-mono-nums">{{ book()!.lastPayoutDate | blDate }}</span> <span
+                            class="bl-stat-sub">{{ payoutNote() }}</span> </div>
                     <div class="bl-stat-box"> <span class="bl-stat-label">MRP</span> <span
                             class="bl-stat-value bl-mono-nums">{{ book()!.mrp | blMoney }}</span> </div>
                     <div class="bl-stat-box"> <span class="bl-stat-label">Print partner</span> <span

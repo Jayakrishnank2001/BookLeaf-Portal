@@ -1,40 +1,26 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Book } from '../models/models';
-import { MOCK_BOOKS } from './mock-data';
+import { ApiBook } from '../api/api.types';
+import { toBook } from '../api/mappers';
 
+/** The API scopes every request to the logged-in author via the JWT, so no author id is sent. */
 @Injectable({ providedIn: 'root' })
 export class BookService {
+  private http = inject(HttpClient);
+  private url = `${environment.apiUrl}/books`;
+
   getBooks(): Observable<Book[]> {
-    return of(MOCK_BOOKS).pipe(delay(450));
+    return this.http.get<{ books: ApiBook[] }>(this.url).pipe(map((res) => res.books.map(toBook)));
   }
 
-  getBooksByAuthor(authorId: string): Observable<Book[]> {
-    return of(MOCK_BOOKS.filter((b) => b.authorId === authorId)).pipe(delay(450));
-  }
-
+  /** Emits undefined when the book doesn't exist or isn't this author's (404 / invalid id). */
   getBook(id: string): Observable<Book | undefined> {
-    return of(MOCK_BOOKS.find((b) => b.id === id)).pipe(delay(350));
-  }
-
-  getGenres(): string[] {
-    return Array.from(new Set(MOCK_BOOKS.map((b) => b.genre)));
-  }
-
-  getStatuses(): Book['status'][] {
-    return Array.from(new Set(MOCK_BOOKS.map((b) => b.status)));
-  }
-
-  totalCopiesSold(authorId: string): number {
-    return MOCK_BOOKS.filter((b) => b.authorId === authorId).reduce((s, b) => s + b.copiesSold, 0);
-  }
-
-  totalPendingRoyalty(authorId: string): number {
-    return MOCK_BOOKS.filter((b) => b.authorId === authorId).reduce((s, b) => s + b.royaltyPending, 0);
-  }
-
-  publishedCount(authorId: string): number {
-    return MOCK_BOOKS.filter((b) => b.authorId === authorId && b.status === 'Published & Live').length;
+    return this.http.get<{ book: ApiBook }>(`${this.url}/${id}`).pipe(
+      map((res) => toBook(res.book)),
+      catchError((err) => (err.status === 404 || err.status === 400 ? of(undefined) : throwError(() => err))),
+    );
   }
 }

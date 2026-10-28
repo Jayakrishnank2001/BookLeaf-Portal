@@ -41,12 +41,6 @@
     line-height: 1.25;
 }
 
-.bl-detail-blurb {
-    font-size: 0.88rem;
-    color: var(--color-ink-2);
-    line-height: 1.55;
-}
-
 .bl-detail-facts {
     display: flex;
     flex-direction: column;

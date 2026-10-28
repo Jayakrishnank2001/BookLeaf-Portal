@@ -3,9 +3,8 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { BookService } from '../../../core/services/book.service';
 import { TicketService } from '../../../core/services/ticket.service';
-import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { Book } from '../../../core/models/models';
+import { apiErrorMessage } from '../../../core/api/api-error';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { SelectComponent, DropdownOption } from '../../../shared/components/select/select.component';
 
@@ -20,9 +19,7 @@ export class CreateTicketComponent implements OnInit {
   private fb = inject(FormBuilder);
   private bookSvc = inject(BookService);
   private ticketSvc = inject(TicketService);
-  private auth = inject(AuthService);
   private notify = inject(NotificationService);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   loading = signal(false);
@@ -34,24 +31,25 @@ export class CreateTicketComponent implements OnInit {
   createdBook = signal<string | null>(null);
   selectedBookId = signal<string>('');
 
-  books: Book[] = [];
-  bookOptions: DropdownOption[] = [];
+  // "General / Account Level" is always available, even if the books request fails.
+  bookOptions: DropdownOption[] = [{ value: '', label: 'General / Account Level' }];
 
   form = this.fb.nonNullable.group({
-    subject: ['', [Validators.required, Validators.minLength(6)]],
-    description: ['', [Validators.required, Validators.minLength(12)]],
+    subject: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(150)]],
+    description: ['', [Validators.required, Validators.minLength(12), Validators.maxLength(5000)]],
   });
 
   ngOnInit() {
-    const authorId = this.auth.currentUser()?.id ?? '';
-    this.bookSvc.getBooksByAuthor(authorId).subscribe((b) => {
-      this.books = b;
-      this.bookOptions = [
-        { value: '', label: 'General / Account Level' },
-        ...b.map((x) => ({ value: x.id, label: x.title })),
-      ];
-      const preselect = this.route.snapshot.queryParamMap.get('bookId');
-      if (preselect && b.some((x) => x.id === preselect)) this.selectedBookId.set(preselect);
+    this.bookSvc.getBooks().subscribe({
+      next: (books) => {
+        this.bookOptions = [
+          { value: '', label: 'General / Account Level' },
+          ...books.map((b) => ({ value: b.id, label: b.title })),
+        ];
+        const preselect = this.route.snapshot.queryParamMap.get('bookId');
+        if (preselect && books.some((b) => b.id === preselect)) this.selectedBookId.set(preselect);
+      },
+      error: (err) => this.notify.error(apiErrorMessage(err, 'Could not load your books.')),
     });
   }
 
@@ -59,6 +57,7 @@ export class CreateTicketComponent implements OnInit {
     this.selectedBookId.set(value ?? '');
   }
 
+  // Attachment is UI-only for now: the file name is shown but nothing is uploaded.
   onFile(e: Event) {
     const input = e.target as HTMLInputElement;
     if (input.files && input.files[0]) this.fileName.set(input.files[0].name);
@@ -70,21 +69,28 @@ export class CreateTicketComponent implements OnInit {
   }
 
   submit() {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.loading()) return; // guards against double submits
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.loading.set(true);
-    const user = this.auth.currentUser()!;
-    const v = this.form.getRawValue();
-    const bookId = this.selectedBookId() || null;
-    this.ticketSvc.createTicket(user.id, user.name, {
-      bookId, subject: v.subject, description: v.description,
-    }).subscribe((t) => {
-      this.loading.set(false);
-      this.submitted.set(true);
-      this.createdId.set(t.id);
-      this.createdCode.set(t.ticketCode);
-      this.createdSubject.set(t.subject);
-      this.createdBook.set(t.bookTitle);
-      this.notify.success('Your query has been submitted.');
+    const { subject, description } = this.form.getRawValue();
+
+    this.ticketSvc.createTicket({ bookId: this.selectedBookId() || null, subject, description }).subscribe({
+      next: (ticket) => {
+        this.loading.set(false);
+        this.submitted.set(true);
+        this.createdId.set(ticket.id);
+        this.createdCode.set(ticket.ticketCode);
+        this.createdSubject.set(ticket.subject);
+        this.createdBook.set(ticket.bookTitle);
+        this.notify.success('Your query has been submitted.');
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.notify.error(apiErrorMessage(err, 'Could not submit your query.'));
+      },
     });
   }
 }

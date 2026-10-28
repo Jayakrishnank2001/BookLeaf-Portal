@@ -68,7 +68,7 @@
 
 .bl-grid-head {
   display: grid;
-  grid-template-columns: 120px 1fr 160px 95px 110px 90px 90px;
+  grid-template-columns: 120px 1fr 160px 110px 90px 90px;
   gap: 14px;
   padding: 10px 14px;
   font-size: 0.7rem;
@@ -81,7 +81,7 @@
 
 .bl-row {
   display: grid;
-  grid-template-columns: 120px 1fr 160px 95px 110px 90px 90px;
+  grid-template-columns: 120px 1fr 160px 110px 90px 90px;
   gap: 14px;
   padding: 14px;
   align-items: center;

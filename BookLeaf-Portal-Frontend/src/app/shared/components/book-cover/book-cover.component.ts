@@ -1,80 +1,53 @@
 import { Component, Input } from '@angular/core';
-import { TicketStatus, TicketPriority, TicketCategory, BookStatus } from '../../../core/models/models';
+import { hashString } from '../../../core/utils/hash';
 
-type BadgeKind = 'status' | 'priority' | 'category' | 'book-status';
+// Brand-coloured gradient pairs. The pair is picked from the title, so a book always
+// gets the same cover without any image storage.
+const PALETTES: [string, string][] = [
+  ['#ea492e', '#c43620'],
+  ['#0d4f3d', '#4b916d'],
+  ['#0d487f', '#4a7a8a'],
+  ['#c0571f', '#c98a1a'],
+  ['#4b3a6b', '#8a5a9c'],
+];
 
 @Component({
-  selector: 'app-badge',
+  selector: 'app-book-cover',
   standalone: true,
-  template: `<span class="bl-badge" [style.color]="fg" [style.background]="bg" [style.border]="border ? '1px solid '+border : 'none'">
-    @if (dot) { <span class="bl-badge-dot" [style.background]="fg"></span> }
-    {{ label() }}
-  </span>`,
-  styles: [`.bl-badge-dot { width: 6px; height: 6px; border-radius: 999px; flex: none; }`],
+  host: { style: 'display: block; width: 100%;' },
+  template: `
+    <div class="cover" [style.background]="gradient()" [style.aspect-ratio]="ratio">
+      <span class="brand">BookLeaf</span>
+      <span class="title">{{ title }}</span>
+    </div>
+  `,
+  styles: [`
+    .cover {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px;
+      border-radius: 10px;
+      color: #fff;
+      overflow: hidden;
+    }
+    .brand { font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.8; }
+    .title {
+      font-family: var(--font-serif);
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+  `],
 })
-export class BadgeComponent {
-  @Input() kind: BadgeKind = 'status';
-  @Input() value: string = '';
-  @Input() dot = false;
-  @Input() solid = false;
+export class BookCoverComponent {
+  @Input({ required: true }) title = '';
+  /** CSS aspect-ratio; the dashboard/grid use landscape, the detail page uses portrait. */
+  @Input() ratio = '16 / 10';
 
-  fg = '';
-  bg = '';
-  border = '';
-
-  ngOnInit() {
-    const p = this.palette();
-    this.fg = p.fg;
-    this.bg = this.solid ? p.fg : p.bg;
-    this.border = this.solid ? 'transparent' : (p.border ?? '');
-    if (this.solid) { this.fg = '#fff'; }
-  }
-
-  label(): string { return this.value || ''; }
-
-  private palette(): { fg: string; bg: string; border?: string } {
-    if (this.kind === 'status') return this.statusPalette(this.value as TicketStatus);
-    if (this.kind === 'priority') return this.priorityPalette(this.value as TicketPriority);
-    if (this.kind === 'book-status') return this.bookStatusPalette(this.value as BookStatus);
-    return this.categoryPalette(this.value as TicketCategory);
-  }
-
-  private statusPalette(s: TicketStatus) {
-    switch (s) {
-      case 'Open': return { fg: 'var(--color-info)', bg: 'var(--color-info-50)', border: 'transparent' };
-      case 'In Progress': return { fg: 'var(--color-warning)', bg: 'var(--color-warning-50)', border: 'transparent' };
-      case 'Resolved': return { fg: 'var(--color-success)', bg: 'var(--color-success-50)', border: 'transparent' };
-      case 'Closed': return { fg: 'var(--color-ink-3)', bg: 'var(--color-paper-2)', border: 'transparent' };
-    }
-  }
-
-  private priorityPalette(p: TicketPriority) {
-    switch (p) {
-      case 'Critical': return { fg: 'var(--color-critical)', bg: 'var(--color-critical-50)', border: 'transparent' };
-      case 'High': return { fg: 'var(--color-high)', bg: 'var(--color-high-50)', border: 'transparent' };
-      case 'Medium': return { fg: 'var(--color-medium)', bg: 'var(--color-medium-50)', border: 'transparent' };
-      case 'Low': return { fg: 'var(--color-low)', bg: 'var(--color-low-50)', border: 'transparent' };
-    }
-  }
-
-  private categoryPalette(c: TicketCategory) {
-    switch (c) {
-      case 'Royalty & Payments': return { fg: 'var(--color-primary-700)', bg: 'var(--color-primary-50)' };
-      case 'ISBN & Metadata Issues': return { fg: 'var(--color-info)', bg: 'var(--color-info-50)' };
-      case 'Printing & Quality': return { fg: 'var(--color-secondary)', bg: 'var(--color-secondary-50)' };
-      case 'Distribution & Availability': return { fg: 'var(--color-accent)', bg: 'var(--color-accent-50)' };
-      case 'Book Status & Production Updates': return { fg: 'var(--color-high)', bg: 'var(--color-high-50)' };
-      case 'General Inquiry': return { fg: 'var(--color-ink-2)', bg: 'var(--color-paper-2)' };
-    }
-  }
-
-  private bookStatusPalette(s: BookStatus) {
-    switch (s) {
-      case 'Published & Live': return { fg: 'var(--color-success)', bg: 'var(--color-success-50)' };
-      case 'In Production - Cover Design':
-      case 'In Production - Typesetting':
-      case 'In Production - Editing':
-      case 'In Press': return { fg: 'var(--color-warning)', bg: 'var(--color-warning-50)' };
-    }
+  gradient(): string {
+    const [from, to] = PALETTES[hashString(this.title) % PALETTES.length];
+    return `linear-gradient(135deg, ${from}, ${to})`;
   }
 }

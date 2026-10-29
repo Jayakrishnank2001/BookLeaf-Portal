@@ -8,6 +8,7 @@
                 [hidden]="!mobileOpen()"> <app-icon name="close" [size]="20" /> </button>
         </div>
         <nav class="bl-nav"> @for (item of nav; track item.route) { <a [routerLink]="item.route"
+                [queryParams]="item.queryParams ?? null"
                 routerLinkActive="bl-nav-active" [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
                 class="bl-nav-item" (click)="mobileOpen.set(false)"> <app-icon [name]="item.icon" [size]="20" />
                 <span>{{ item.label }}</span> </a> } </nav>

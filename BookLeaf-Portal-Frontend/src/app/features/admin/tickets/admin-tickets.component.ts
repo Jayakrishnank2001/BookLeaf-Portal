@@ -1,8 +1,9 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminTicketService, PaginatedTickets } from '../../../core/services/admin-ticket.service';
 import { Ticket, TicketStatus, TicketPriority } from '../../../core/models/models';
+import { AuthService } from '../../../core/services/auth.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
 import { SelectComponent, DropdownOption } from '../../../shared/components/select/select.component';
@@ -20,6 +21,8 @@ type SortKey = 'priority' | 'created' | 'updated' | 'subject';
 })
 export class AdminTicketsComponent implements OnInit {
   private adminSvc = inject(AdminTicketService);
+  private auth = inject(AuthService);
+  private route = inject(ActivatedRoute);
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -31,6 +34,8 @@ export class AdminTicketsComponent implements OnInit {
   dateFilter: string | null = null;
   sortKey: SortKey = 'priority';
   sortDir: 'asc' | 'desc' = 'desc';
+
+  currentUserId = this.auth.currentUser()?.id ?? null;
 
   private all = signal<Ticket[]>([]);
   filtered = signal<Ticket[]>([]);
@@ -61,6 +66,7 @@ export class AdminTicketsComponent implements OnInit {
   assignedOptions: DropdownOption[] = [
     { value: '', label: 'Anyone' },
     { value: 'unassigned', label: 'Unassigned' },
+    { value: 'me', label: 'My Tickets' },
   ];
   dateOptions: DropdownOption[] = [
     { value: '', label: 'Any time' },
@@ -82,6 +88,14 @@ export class AdminTicketsComponent implements OnInit {
     p === 'Critical' ? 'var(--color-critical)' : p === 'High' ? 'var(--color-high)' : p === 'Medium' ? 'var(--color-medium)' : 'var(--color-low)';
 
   ngOnInit() {
+    // Subscribe to query param changes so sidebar nav (Ticket Queue → My Assigned
+    // → Ticket Queue) updates the assigned filter without page reload.
+    this.route.queryParamMap.subscribe((params) => {
+      const assignedParam = params.get('assigned');
+      this.assignedFilter = assignedParam === 'me' ? 'me' : null;
+      this.applyFilters();
+    });
+
     this.adminSvc.getTickets({ sort: 'updatedAt', order: 'desc' }).subscribe({
       next: (result: PaginatedTickets) => {
         this.all.set(result.tickets);
@@ -131,7 +145,9 @@ export class AdminTicketsComponent implements OnInit {
       if (this.priorityFilter && t.priority !== this.priorityFilter) return false;
       if (this.assignedFilter) {
         if (this.assignedFilter === 'unassigned' && t.assignedTo) return false;
-        if (this.assignedFilter !== 'unassigned' && t.assignedTo !== this.assignedFilter) return false;
+        else if (this.assignedFilter === 'me') {
+          if (t.assignedTo !== this.currentUserId) return false;
+        } else if (t.assignedTo !== this.assignedFilter) return false;
       }
       if (this.dateFilter) {
         const days = parseInt(this.dateFilter, 10);

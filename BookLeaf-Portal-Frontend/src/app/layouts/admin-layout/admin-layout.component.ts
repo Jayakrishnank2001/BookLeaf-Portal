@@ -11,6 +11,7 @@ interface NavItem {
     route: string;
     icon: IconName;
     exact?: boolean;
+    queryParams?: Record<string, string | null>;
 }
 
 @Component({
@@ -42,8 +43,9 @@ export class AdminLayoutComponent {
         },
         {
             label: 'My Assigned',
-            route: '/admin/tickets?assigned=me',
-            icon: 'list'
+            route: '/admin/tickets',
+            icon: 'list',
+            queryParams: { assigned: 'me' }
         },];
 
     logout() {

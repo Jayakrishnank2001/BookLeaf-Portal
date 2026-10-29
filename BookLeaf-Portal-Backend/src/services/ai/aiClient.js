@@ -8,10 +8,33 @@ const logger = require('../../utils/logger');
 // Thrown for ANY AI failure (no key, timeout, rate limit, provider error, empty output).
 // Callers catch this and degrade gracefully; if it escapes to the API layer it becomes a 503.
 class AiUnavailableError extends AppError {
-  constructor(reason, message = 'AI assistance is unavailable right now. You can continue manually.') {
+  constructor(reason, message = 'AI assistance is unavailable right now. You can continue manually.', retryAfter = null) {
     super(message, 503, 'AI_UNAVAILABLE');
     this.reason = reason; // NO_API_KEY | TIMEOUT | RATE_LIMITED | PROVIDER_ERROR | EMPTY_RESPONSE
+    this.retryAfter = retryAfter; // seconds until the caller should retry (from provider), or null
   }
+}
+
+/**
+ * Attempts to parse Google's retryDelay (e.g. "690s", "90s") from a 429/ApiError message.
+ * Returns the delay in seconds, or null if it can't be parsed.
+ */
+function parseRetryDelay(err) {
+  try {
+    const parsed = JSON.parse(err.message || '{}');
+    const details = parsed?.error?.details || [];
+    const retryInfo = details.find((d) => d['@type']?.includes('RetryInfo'));
+    if (retryInfo?.retryDelay) {
+      const match = retryInfo.retryDelay.match(/^(\d+)([sm])$/);
+      if (match) {
+        const value = parseInt(match[1], 10);
+        return match[2] === 'm' ? value * 60 : value;
+      }
+    }
+  } catch {
+    // Message wasn't JSON or doesn't have the expected shape — ignore.
+  }
+  return null;
 }
 
 let client = null;
@@ -24,6 +47,12 @@ function getClient() {
 // Gemini 2.5 models "think" by default, which costs tokens and latency we don't need
 // for classification/drafting. A budget of 0 turns it off. Only applied where supported.
 const thinkingConfig = /2\.5/.test(env.aiModel) ? { thinkingConfig: { thinkingBudget: 0 } } : {};
+
+/**
+ * Don't retry-on-429 if Google says to wait this many seconds or more (too long for a user
+ * to hold). For shorter delays, we retry after the requested wait.
+ */
+const MAX_RETRY_DELAY_SECONDS = 30;
 
 async function callOnce({ system, prompt, json, maxOutputTokens, temperature }) {
   const controller = new AbortController();
@@ -51,9 +80,17 @@ async function callOnce({ system, prompt, json, maxOutputTokens, temperature }) 
 
 function toAiError(err) {
   if (err instanceof AiUnavailableError) return err;
-  if (err.name === 'AbortError' || /abort/i.test(err.message || '')) return new AiUnavailableError('TIMEOUT');
-  if (err.status === 429) return new AiUnavailableError('RATE_LIMITED');
-  return new AiUnavailableError('PROVIDER_ERROR');
+  if (err.name === 'AbortError' || /abort/i.test(err.message || '')) {
+    logger.warn('AI request timed out');
+    return new AiUnavailableError('TIMEOUT');
+  }
+  const retryAfter = parseRetryDelay(err);
+  if (err.status === 429) {
+    logger.warn('AI rate limited (free-tier quota exceeded)', { retryAfter: retryAfter ? `${retryAfter}s` : 'unknown' });
+    return new AiUnavailableError('RATE_LIMITED', undefined, retryAfter);
+  }
+  logger.error('AI provider error', { status: err.status, message: err.message?.slice(0, 300) });
+  return new AiUnavailableError('PROVIDER_ERROR', undefined, retryAfter);
 }
 
 const isTransient = (err) => err.status === 429 || err.status >= 500;
@@ -73,10 +110,23 @@ async function generate({ system, prompt, json = false, maxOutputTokens = 512, t
   try {
     return await callOnce(opts);
   } catch (firstErr) {
-    // Retry once, only for rate limits / 5xx. Timeouts and config errors are not retried.
+    // Retry only for rate limits / 5xx. Timeouts and config errors are not retried.
     if (!isTransient(firstErr)) throw toAiError(firstErr);
-    logger.warn(`AI transient error (${firstErr.status}), retrying once`);
-    await sleep(800);
+
+    // For 429, check if the retry delay is reasonable. If Google says to wait a long
+    // time (e.g. quota exhausted for the day), don't tie up the request — surface
+    // the error immediately so the caller can show a "try again later" message.
+    if (firstErr.status === 429) {
+      const retryAfter = parseRetryDelay(firstErr);
+      if (retryAfter !== null && retryAfter > MAX_RETRY_DELAY_SECONDS) {
+        throw toAiError(firstErr);
+      }
+    }
+
+    const retryAfter = parseRetryDelay(firstErr);
+    const delayMs = retryAfter !== null ? retryAfter * 1000 : firstErr.status >= 500 ? 2000 : 800;
+    logger.warn(`AI transient error (${firstErr.status}), retrying in ${delayMs}ms`, { message: firstErr.message?.slice(0, 200) });
+    await sleep(delayMs);
     try {
       return await callOnce(opts);
     } catch (secondErr) {

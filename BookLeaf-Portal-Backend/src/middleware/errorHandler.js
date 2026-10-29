@@ -60,6 +60,8 @@ module.exports = (err, req, res, next) => {
       code: known.code,
       message: known.message,
       ...(known.details && { details: known.details }),
+      ...(known.reason && { reason: known.reason }),
+      ...(known.retryAfter != null && { retryAfter: known.retryAfter }),
     },
   });
 };

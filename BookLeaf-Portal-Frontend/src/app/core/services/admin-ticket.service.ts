@@ -113,6 +113,9 @@ export class AdminTicketService {
   }
 
   getAIDraft(ticketId: string, regenerate = false): Observable<AIDraft> {
+    // Intentionally NOT catching the error here: the ticket-detail component reads
+    // `reason` and `retryAfter` from the raw HttpErrorResponse body to show
+    // specific UI (rate-limit countdown, timeout vs. provider-error messages).
     return this.http
       .get<{ draft: ApiAIDraft }>(`${this.url}/${ticketId}/draft`, {
         params: { regenerate: String(regenerate) },
@@ -123,7 +126,6 @@ export class AdminTicketService {
           generatedAt: res.draft.generatedAt,
           source: 'Backend AI',
         })),
-        catchError((err) => throwError(() => new Error(apiErrorMessage(err, 'Failed to load AI draft')))),
       );
   }
 

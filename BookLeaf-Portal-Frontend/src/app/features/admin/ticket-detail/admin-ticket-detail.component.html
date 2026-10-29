@@ -129,11 +129,27 @@
           </div>
           } @else if (draftUnavailable()) {
           <div class="bl-draft-head">
-            <span class="bl-draft-title bl-draft-title-warn"><app-icon name="info" [size]="16" /> AI drafting is unavailable right now</span>
+            @if (draftErrorReason() === 'RATE_LIMITED') {
+              <span class="bl-draft-title bl-draft-title-warn"><app-icon name="info" [size]="16" /> AI rate-limited — free-tier quota reached</span>
+            } @else if (draftErrorReason() === 'TIMEOUT') {
+              <span class="bl-draft-title bl-draft-title-warn"><app-icon name="info" [size]="16" /> AI request timed out — the model may be slow or overloaded</span>
+            } @else if (draftErrorReason() === 'PROVIDER_ERROR') {
+              <span class="bl-draft-title bl-draft-title-warn"><app-icon name="info" [size]="16" /> AI provider returned an error</span>
+            } @else if (draftErrorReason() === 'NO_API_KEY') {
+              <span class="bl-draft-title bl-draft-title-warn"><app-icon name="info" [size]="16" /> AI is not configured on the server</span>
+            } @else {
+              <span class="bl-draft-title bl-draft-title-warn"><app-icon name="info" [size]="16" /> AI drafting is unavailable right now</span>
+            }
           </div>
-          <p class="bl-draft-text">No problem: write your reply below. You can try the AI draft again at any time.</p>
+          <p class="bl-draft-text">
+            @if (draftRetryAfter(); as retrySec) {
+              Try again in {{ Math.ceil(retrySec / 60) }} minute{{ retrySec > 120 ? 's' : '' }}.
+            } @else {
+              No problem: write your reply below. You can try the AI draft again at any time.
+            }
+          </p>
           <div class="bl-draft-actions">
-            <button type="button" class="bl-btn bl-btn-ghost bl-btn-sm" (click)="generateDraft(false)">
+            <button type="button" class="bl-btn bl-btn-ghost bl-btn-sm" (click)="generateDraft(false)" [disabled]="!!draftRetryAfter()">
               <app-icon name="refresh" [size]="15" /> Try again
             </button>
           </div>

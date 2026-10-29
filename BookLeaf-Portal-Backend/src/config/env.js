@@ -23,7 +23,7 @@ const env = Object.freeze({
   // AI key is intentionally optional: without it the AI layer is disabled
   // and the app falls back to manual triage/replies.
   geminiApiKey: process.env.GEMINI_API_KEY || null,
-  aiModel: process.env.AI_MODEL || 'gemini-3.5-flash',
+  aiModel: process.env.AI_MODEL || 'gemini-3.6-flash',
   aiTimeoutMs: Number(process.env.AI_TIMEOUT_MS) || 10000,
 });
 

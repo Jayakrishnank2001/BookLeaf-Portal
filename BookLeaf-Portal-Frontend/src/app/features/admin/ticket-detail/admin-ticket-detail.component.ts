@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AdminTicketService } from '../../../core/services/admin-ticket.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -45,6 +46,8 @@ export class AdminTicketDetailComponent implements OnInit {
   draftLoading = signal(false);
   draftUnavailable = signal(false);
   draftInserted = signal(false);
+  draftErrorReason = signal<string | null>(null);
+  draftRetryAfter = signal<number | null>(null);
 
   // Form fields. Signals (not plain fields): the app is zoneless, so Angular only re-renders
   // when a signal changes. Clearing a plain field after an async save would leave stale text on screen.
@@ -222,6 +225,8 @@ export class AdminTicketDetailComponent implements OnInit {
     if (!t || this.draftLoading()) return;
     this.draftLoading.set(true);
     this.draftUnavailable.set(false);
+    this.draftErrorReason.set(null);
+    this.draftRetryAfter.set(null);
 
     this.adminSvc.getAIDraft(t.id, regenerate).subscribe({
       next: () => this.refreshTicket(() => {
@@ -229,7 +234,11 @@ export class AdminTicketDetailComponent implements OnInit {
         this.draftInserted.set(false);
         if (!this.draft()) this.draftUnavailable.set(true);
       }),
-      error: () => {
+      error: (err: HttpErrorResponse) => {
+        // Capture the specific error reason for display (RATE_LIMITED, PROVIDER_ERROR, etc.)
+        const body = err.error?.error;
+        this.draftErrorReason.set(body?.reason ?? null);
+        this.draftRetryAfter.set(body?.retryAfter ?? null);
         // AI down / rate limited / no key: the admin can still write the reply by hand.
         this.draftLoading.set(false);
         this.draftUnavailable.set(true);

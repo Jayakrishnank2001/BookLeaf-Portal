@@ -586,6 +586,7 @@ BookLeaf-Portal/
 | 5 | **Draft cache not invalidated** on classification override | Admin must use `regenerate=true` after changing category to get a fresh draft |
 | 6 | **No per-platform royalty breakdown** | Totals shown only; per-platform data mentioned in KB but not implemented |
 | 7 | **No author follow-up in ticket** | Authors must open a new ticket for follow-ups (by design) |
+| 8 | **Render free-tier cold starts** | The backend may experience a delay on the first request after a period of inactivity because the free-tier service can spin down when idle. |
 
 ---
 

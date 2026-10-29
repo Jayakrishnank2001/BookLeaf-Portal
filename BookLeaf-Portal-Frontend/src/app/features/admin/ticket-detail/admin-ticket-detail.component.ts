@@ -54,6 +54,8 @@ export class AdminTicketDetailComponent implements OnInit {
   replyMessage = signal('');
   noteContent = signal('');
   resolveAfterSend = signal(false);
+  
+  Math = Math;
 
   statusOptions = toOptions(['Open', 'In Progress', 'Resolved', 'Closed']);
   priorityOptions = toOptions(['Critical', 'High', 'Medium', 'Low']);

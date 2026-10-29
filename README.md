@@ -85,7 +85,7 @@ Open the frontend and log in (see [Test Accounts](#test-accounts)).
 | **AI Provider** | Google Gemini (`@google/genai` SDK) |
 | **Frontend** | Angular 21 (standalone components, signals, zoneless), RxJS |
 | **Auth** | JWT + Bearer token, role-based middleware (`author`/`admin`) |
-| **Deployment** | Railway (backend), Vercel (frontend) |
+| **Deployment** | Render (backend), Vercel (frontend) |
 
 ---
 
@@ -612,4 +612,6 @@ BookLeaf-Portal/
 - Classification sends NO knowledge base (only subject + description). Drafts send only the category's KB section, one example, and relevant book data (compacted to 8 fields, max 6 books). All model output is Zod-validated before DB writes.
 - Error propagation: `aiClient.js` → `errorHandler.js` → frontend reads `error.reason` and `error.retryAfter` for user-facing messaging.
 
-**Deployment:** Designed for Railway (backend, MongoDB Atlas) + Vercel (frontend).
+**Deployment:** Designed for Render (backend, MongoDB Atlas) + Vercel (frontend).
+- Backend live at: https://bookleaf-portal-1amq.onrender.com
+- Frontend live at: https://book-leaf-portal-six.vercel.app
